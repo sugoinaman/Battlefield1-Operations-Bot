@@ -1,5 +1,6 @@
 package commands;
 
+import config.Configuration;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -20,7 +21,7 @@ public class MyCommands extends ListenerAdapter {
         event.deferReply().queue();
         if (command.equals("maphistory")) {
             try {
-                BufferedReader br = new BufferedReader(new FileReader(System.getenv("FILE_PATH")));
+                BufferedReader br = new BufferedReader(new FileReader(Configuration.getFILE_PATH()));
                 StringBuilder history = new StringBuilder();
                 String line;
                 while ((line = br.readLine()) != null) {

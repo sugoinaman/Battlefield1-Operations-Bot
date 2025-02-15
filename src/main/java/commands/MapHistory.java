@@ -2,8 +2,11 @@ package commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import config.Configuration;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,13 +24,16 @@ import java.util.concurrent.TimeUnit;
 
 public class MapHistory {
 
+    Dotenv dotenv = Dotenv.configure()
+            .directory("./")
+            .load();
+
     private static final Logger log = LoggerFactory.getLogger(MapHistory.class);
     private static String lastMap = null;
     private static final List<String> mapHistory = new ArrayList<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private static final String FILE_PATH = System.getenv("FILE_PATH");
-    private static final String NEWA_URL = System.getenv("URL");
-
+    private final String FILE_PATH = Configuration.getFILE_PATH();
+    private static final String NEWA_URL = "https://api.gametools.network/bf1/servers/?name=%5Bnew%21%5DAllMap%20Operation%20%7C%20discord.gg%2Fnewa%20%7C%20NoHacker%20HappyGame&platform=pc&limit=10&region=all&lang=en-us";
 
     public MapHistory() {
         scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 1, TimeUnit.MINUTES);
