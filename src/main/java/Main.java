@@ -1,5 +1,5 @@
 import commands.MapHistory;
-import commands.MyCommands;
+import implementation.MapHistoryImpl;
 import config.Configuration;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -13,10 +13,10 @@ public class Main {
 
         JDA api = JDABuilder.createDefault(Configuration.getDiscordToken())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(new MyCommands())
+                .addEventListeners(new MapHistory())
                 .build();
 
-        //Map History triggers on bot start
-        MapHistory mapHistory = new MapHistory();
+        //Map History Implementation triggers on bot start
+        MapHistoryImpl mapHistory = new MapHistoryImpl();
     }
 }
