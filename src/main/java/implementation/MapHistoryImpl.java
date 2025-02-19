@@ -30,21 +30,14 @@ public class MapHistoryImpl {
 
     private static final Logger log = LoggerFactory.getLogger(MapHistoryImpl.class);
     private static String lastMap = null;
-    private static final List<String> mapHistory = new ArrayList<>();
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final String FILE_PATH = Configuration.getFILE_PATH();
     private static final String NEWA_URL = "https://api.gametools.network/bf1/servers/?name=%5Bnew%21%5DAllMap%20Operation%20%7C%20discord.gg%2Fnewa%20%7C%20NoHacker%20HappyGame&platform=pc&limit=10&region=all&lang=en-us";
-    private static List<String> recentMaps = new ArrayList<>();
+    private static final List<String> recentMaps = new ArrayList<>();
 
     public MapHistoryImpl() {
         scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 20, TimeUnit.SECONDS);
     }
-
-
-
-
-
-
 
     private String fetchCurrentMap() throws IOException, URISyntaxException {
         URI uri = new URI(NEWA_URL);
@@ -60,31 +53,28 @@ public class MapHistoryImpl {
         try {
             String currentMap = fetchCurrentMap();
             if (currentMap == null || currentMap.equals(lastMap)) return; // insta return
-
-            // write to txt file
-            mapHistory.add(currentMap);
             writeToFile(currentMap);
+            lastMap = currentMap;
 
-            // add and
+            if(recentMaps.size()==5){
+                recentMaps.removeFirst();
+                recentMaps.add(currentMap);
+            }
+            else recentMaps.add(currentMap);
+
             log.info("New Map Detected: {}", currentMap);
             if (lastMap != null) log.info("Last Map was: {}", lastMap);
 
-            lastMap = currentMap;
         } catch (Exception e) {
             log.error("Error updating map history", e);
         }
     }
 
 
-
-
-
-
-
-
-    public List<String> mapHistory() {
-        return new ArrayList<>(mapHistory); // Return a copy of the list
+    public List<String> getRecentMaps(){
+        return new ArrayList<>(recentMaps);
     }
+
 
     private JsonNode getServersArray(URL url) throws IOException {
 
@@ -95,7 +85,7 @@ public class MapHistoryImpl {
         //extracted servers from array and returns empty array if it doesn't exist
     }
 
-    private void writeToFile(String mapName) {
+    private void  writeToFile(String mapName) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
 
             ZonedDateTime cetTime = ZonedDateTime.now(ZoneId.of("Europe/Berlin")); // CET/CEST timezone
