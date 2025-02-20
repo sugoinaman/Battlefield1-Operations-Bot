@@ -1,5 +1,4 @@
 import commands.MapHistory;
-import implementation.MapHistoryImpl;
 import config.Configuration;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -17,6 +16,7 @@ public class Main {
                 .build();
 
         //Map History Implementation triggers on bot start
-        MapHistoryImpl mapHistory = new MapHistoryImpl();
+         // MapHistoryImpl mapHistory = new MapHistoryImpl();
+        // commented this since i am calling it in another class which will be called here.
     }
 }
