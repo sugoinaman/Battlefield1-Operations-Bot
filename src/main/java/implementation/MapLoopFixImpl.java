@@ -16,10 +16,15 @@ public class MapLoopFixImpl {
     MapHistoryImpl mapHistory = new MapHistoryImpl();
 
     public MapLoopFixImpl() {
-        scheduler.scheduleAtFixedRate(this::mapLoopFix, 0, 20, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::mapLoopFix, 0, 40, TimeUnit.SECONDS);
     }
-
+    //TODO:this timer needs a 20 sec difference between map history check to avoid an edge case
+    // but i dont get paid enuf so i increased period to 40 ahahah
     private void mapLoopFix() {
+
+        if (recentMaps.size() < 5) {
+            return;
+        }
         recentMaps = mapHistory.getRecentMaps();
 
         //brute forcing
@@ -29,20 +34,28 @@ public class MapLoopFixImpl {
         if (latestMap.equalsIgnoreCase("Sinai") &&
                 (secondLatestMap.equalsIgnoreCase("ballroom blitz") ||
                 secondLatestMap.equalsIgnoreCase("Argonne"))) {
-            System.out.println("Map loop detected, change map to fao");
+            log.info("Map loop detected, change map to fao");
         }
-        if (latestMap.equalsIgnoreCase("Fort De Vaux") && !secondLatestMap.equalsIgnoreCase("Verdun")) {
-            System.out.println("Fort loop detected");
+        if (latestMap.equalsIgnoreCase("Fort De Vaux") &&
+                !secondLatestMap.equalsIgnoreCase("Verdun")) {
+            log.info("Fort loop detected");
 
         }
-        if (latestMap.equalsIgnoreCase("Tsaritsyn") && !secondLatestMap.equalsIgnoreCase("Volga")) {
-            System.out.println("tsar loop");
+        if (latestMap.equalsIgnoreCase("Tsaritsyn") &&
+                !secondLatestMap.equalsIgnoreCase("Volga")) {
+            log.info("tsar loop");
         }
-        if (latestMap.equalsIgnoreCase("Empire's Edge") && secondLatestMap.equalsIgnoreCase("Monte"))  {
+        if (latestMap.equalsIgnoreCase("Empire's Edge") &&
+                secondLatestMap.equalsIgnoreCase("Monte"))  {
             //also handles empire before tsar loop!
-            System.out.println("tsar loop detected");
+            log.info("tsar loop detected");
         }
-        //TODO: Rupture loop
+        if(latestMap.equalsIgnoreCase("Soisson") &&
+        secondLatestMap.equalsIgnoreCase("fort") ||
+                secondLatestMap.equalsIgnoreCase("verdun")){
+            log.info("Need to skip soisson to avoid rupture loop");
+        }
+        //TODO: not sure about other maps
     }
 }
 
