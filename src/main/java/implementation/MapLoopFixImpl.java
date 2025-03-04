@@ -18,8 +18,9 @@ public class MapLoopFixImpl {
     public MapLoopFixImpl() {
         scheduler.scheduleAtFixedRate(this::mapLoopFix, 0, 40, TimeUnit.SECONDS);
     }
+
     //TODO:this timer needs a 20 sec difference between map history check to avoid an edge case
-    // but i dont get paid enuf so i increased period to 40 ahahah
+    // but i dont get paid enuf so i increased period to 40 muahahah
     private void mapLoopFix() {
 
         if (recentMaps.size() < 5) {
@@ -31,31 +32,25 @@ public class MapLoopFixImpl {
         String latestMap = recentMaps.get(4);
         String secondLatestMap = recentMaps.get(3);
 
-        if (latestMap.equalsIgnoreCase("Sinai") &&
-                (secondLatestMap.equalsIgnoreCase("ballroom blitz") ||
-                secondLatestMap.equalsIgnoreCase("Argonne"))) {
-            log.info("Map loop detected, change map to fao");
-        }
-        if (latestMap.equalsIgnoreCase("Fort De Vaux") &&
-                !secondLatestMap.equalsIgnoreCase("Verdun")) {
-            log.info("Fort loop detected");
-
-        }
-        if (latestMap.equalsIgnoreCase("Tsaritsyn") &&
-                !secondLatestMap.equalsIgnoreCase("Volga")) {
-            log.info("tsar loop");
+        if (latestMap.equalsIgnoreCase("Suez") &&
+                (secondLatestMap.equalsIgnoreCase("Rupture") ||
+                        secondLatestMap.equalsIgnoreCase("Soissons"))) {
+            log.info("Map loop detected");
         }
         if (latestMap.equalsIgnoreCase("Empire's Edge") &&
-                secondLatestMap.equalsIgnoreCase("Monte"))  {
-            //also handles empire before tsar loop!
-            log.info("tsar loop detected");
+                secondLatestMap.equalsIgnoreCase("Zeebrugge")) {
+            log.info("loop detected");
         }
-        if(latestMap.equalsIgnoreCase("Soisson") &&
-        secondLatestMap.equalsIgnoreCase("fort") ||
-                secondLatestMap.equalsIgnoreCase("verdun")){
-            log.info("Need to skip soisson to avoid rupture loop");
+        if (latestMap.equalsIgnoreCase("Tsaritsyn") &&
+                (secondLatestMap.equalsIgnoreCase("Argonne") ||
+                        secondLatestMap.equalsIgnoreCase("ballroom"))) {
+            log.info("loop detected");
         }
-        //TODO: not sure about other maps
+        if (latestMap.equalsIgnoreCase("Argonne") &&
+                secondLatestMap.equalsIgnoreCase("Lupkow")) {
+            log.info("loop detected");
+        }
+        //ToDo: Cannot check Brusilov loop
     }
 }
 
