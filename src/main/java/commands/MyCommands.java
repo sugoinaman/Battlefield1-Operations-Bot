@@ -27,13 +27,7 @@ import java.util.stream.Stream;
 
 public class MyCommands extends ListenerAdapter {
 
-    //    private String[] maps = new String[]{
-//            "Giant's, Monte, Empires, River, Cape, Achi, Zee",
-//            "Fao, Suez, Sinai, Soisson, Rupture",
-//            "Volga, Tsar, Scar, Amiens, Ballroom, Argonne",
-//            "Verdun, fort, cape, achi, zee",
-//            "lupkow",
-//            "prise, zee"};
+
     private String[] availableMaps = new String[]{"Giants", "Fao", "Volga", "Verdun", "Prise", "Lupkow"};
     public List<String> setMaps = new ArrayList<>();
     private static MapLoopFixImpl mapLoopFix;
