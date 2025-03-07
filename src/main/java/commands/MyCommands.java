@@ -1,6 +1,7 @@
 package commands;
 
 import config.Configuration;
+import implementation.MapLoopFixImpl;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -26,14 +27,25 @@ import java.util.stream.Stream;
 
 public class MyCommands extends ListenerAdapter {
 
-    private String[] maps = new String[]{
-            "Giant's, Monte, Empires, River, Cape, Achi, Zee",
-            "Fao, Suez, Sinai, Soisson, Rupture",
-            "Volga, Tsar, Scar, Amiens, Ballroom, Argonne",
-            "Verdun, fort, cape, achi, zee",
-            "lupkow",
-            "prise, zee"};
+    //    private String[] maps = new String[]{
+//            "Giant's, Monte, Empires, River, Cape, Achi, Zee",
+//            "Fao, Suez, Sinai, Soisson, Rupture",
+//            "Volga, Tsar, Scar, Amiens, Ballroom, Argonne",
+//            "Verdun, fort, cape, achi, zee",
+//            "lupkow",
+//            "prise, zee"};
+    private String[] availableMaps = new String[]{"Giants", "Fao", "Volga", "Verdun", "Prise", "Lupkow"};
+    public List<String> setMaps = new ArrayList<>();
+    private static MapLoopFixImpl mapLoopFix;
+    private static int curr = 0;
 
+    public List<String> getSetMaps() {
+        return setMaps;
+    }
+
+    public MyCommands() {
+
+    }
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -62,13 +74,17 @@ public class MyCommands extends ListenerAdapter {
 
                 event.deferReply().queue();
                 event.getHook().sendMessage("Check console").queue();
-                System.out.println(event.getOption("rotation1"));
-                System.out.println(event.getOption("rotation2"));
-                System.out.println(event.getOption("rotation3"));
-                System.out.println(event.getOption("rotation4"));
-                System.out.println(event.getOption("rotation5"));
-                System.out.println(event.getOption("rotation6"));
+                setMaps.add(event.getOption("rotation1").getAsString());
+                setMaps.add(event.getOption("rotation2").getAsString());
+                setMaps.add(event.getOption("rotation3").getAsString());
+                setMaps.add(event.getOption("rotation4").getAsString());
+                setMaps.add(event.getOption("rotation5").getAsString());
+                setMaps.add(event.getOption("rotation6").getAsString());
 
+                if(mapLoopFix.onMapLoopEvent()){
+                    System.out.println("bf.change to C");
+                    curr++;
+                }
 
         }
 
@@ -95,10 +111,10 @@ public class MyCommands extends ListenerAdapter {
 
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
-        if (event.getName().equalsIgnoreCase("customrotation") && event.getFocusedOption().getName().equals("rotation1")) {
-            List<Command.Choice> options = Stream.of(maps)
-                    .filter(maps -> maps.startsWith(event.getFocusedOption().getValue()))
-                    .map(maps -> new Command.Choice(maps,maps))
+        if (event.getName().equals("customrotation")) {
+            List<Command.Choice> options = Stream.of(availableMaps)
+                    .filter(word -> word.startsWith(event.getFocusedOption().getValue())) // only display words that start with the user's current input
+                    .map(word -> new Command.Choice(word, word)) // map the words to choices
                     .collect(Collectors.toList());
             event.replyChoices(options).queue();
         }
@@ -107,12 +123,12 @@ public class MyCommands extends ListenerAdapter {
 
     @NotNull
     private static ArrayList<OptionData> getOptionDataOfDifferentRotations() {
-        OptionData Rotation1 = new OptionData(OptionType.STRING, "rotation1", "r1", true);
-        OptionData Rotation2 = new OptionData(OptionType.STRING, "rotation2", "r2", false);
-        OptionData Rotation3 = new OptionData(OptionType.STRING, "rotation3", "r3", false);
-        OptionData Rotation4 = new OptionData(OptionType.STRING, "rotation4", "r4", false);
-        OptionData Rotation5 = new OptionData(OptionType.STRING, "rotation5", "r5", false);
-        OptionData Rotation6 = new OptionData(OptionType.STRING, "rotation6", "r6", false);
+        OptionData Rotation1 = new OptionData(OptionType.STRING, "rotation1", "map to be set", true, true);
+        OptionData Rotation2 = new OptionData(OptionType.STRING, "rotation2", "map to be set", false, true);
+        OptionData Rotation3 = new OptionData(OptionType.STRING, "rotation3", "map to be set", false, true);
+        OptionData Rotation4 = new OptionData(OptionType.STRING, "rotation4", "map to be set", false, true);
+        OptionData Rotation5 = new OptionData(OptionType.STRING, "rotation5", "map to be set", false, true);
+        OptionData Rotation6 = new OptionData(OptionType.STRING, "rotation6", "map to be set", false, true);
         return new ArrayList<>(new ArrayList<>(Arrays.asList(Rotation1, Rotation2, Rotation3, Rotation4, Rotation5, Rotation6)));
     }
 }

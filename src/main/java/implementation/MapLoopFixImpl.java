@@ -16,41 +16,50 @@ public class MapLoopFixImpl {
     MapHistoryImpl mapHistory = new MapHistoryImpl();
 
     public MapLoopFixImpl() {
-        scheduler.scheduleAtFixedRate(this::mapLoopFix, 0, 40, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::onMapLoopEvent, 0, 10, TimeUnit.SECONDS);
     }
 
-    //TODO:this timer needs a 20 sec difference between map history check to avoid an edge case
-    // but i dont get paid enuf so i increased period to 40 muahahah
-    private void mapLoopFix() {
+    public boolean onMapLoopEvent() {
 
         if (recentMaps.size() < 5) {
-            return;
+            return false;
         }
         recentMaps = mapHistory.getRecentMaps();
 
         //brute forcing
-        String latestMap = recentMaps.get(4);
-        String secondLatestMap = recentMaps.get(3);
+        String currentMap = recentMaps.get(4);
+        String previousMap = recentMaps.get(3);
 
-        if (latestMap.equalsIgnoreCase("Suez") &&
-                (secondLatestMap.equalsIgnoreCase("Rupture") ||
-                        secondLatestMap.equalsIgnoreCase("Soissons"))) {
-            log.info("Map loop detected");
-        }
-        if (latestMap.equalsIgnoreCase("Empire's Edge") &&
-                secondLatestMap.equalsIgnoreCase("Zeebrugge")) {
-            log.info("loop detected");
-        }
-        if (latestMap.equalsIgnoreCase("Tsaritsyn") &&
-                (secondLatestMap.equalsIgnoreCase("Argonne") ||
-                        secondLatestMap.equalsIgnoreCase("ballroom"))) {
-            log.info("loop detected");
-        }
-        if (latestMap.equalsIgnoreCase("Argonne") &&
-                secondLatestMap.equalsIgnoreCase("Lupkow")) {
-            log.info("loop detected");
-        }
-        //ToDo: Cannot check Brusilov loop
+//        if (latestMap.equalsIgnoreCase("Suez") &&
+//                (secondLatestMap.equalsIgnoreCase("Rupture") ||
+//                        secondLatestMap.equalsIgnoreCase("Soissons"))) {
+//            log.info("Map loop detected");
+//        }
+//        if (latestMap.equalsIgnoreCase("Empire's Edge") &&
+//                secondLatestMap.equalsIgnoreCase("Zeebrugge")) {
+//            log.info("loop detected");
+//        }
+//        if (latestMap.equalsIgnoreCase("Tsaritsyn") &&
+//                (secondLatestMap.equalsIgnoreCase("Argonne") ||
+//                        secondLatestMap.equalsIgnoreCase("ballroom"))) {
+//            log.info("loop detected");
+//        }
+//        if (latestMap.equalsIgnoreCase("Argonne") &&
+//                secondLatestMap.equalsIgnoreCase("Lupkow")) {
+//            log.info("loop detected");
+//        }
+
+        //this function needs to be executed 24/7
+
+        if ((previousMap.equals("zee") && currentMap.equals("empire"))) return true;
+        if ((previousMap.equals("Rupture") && currentMap.equals("suez"))) return true;
+        if ((previousMap.equals("Argonne") && currentMap.equals("Tsar"))) return true;
+        if ((previousMap.equals("Lupkow") && currentMap.equals("Argonne"))) return true;
+
+        return false;
     }
+
+
 }
+
 
