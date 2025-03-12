@@ -1,5 +1,5 @@
-import implementation.MapHistoryImpl;
-import implementation.MapLoopFixImpl;
+import implementation.MapHistory;
+import implementation.MapLoopFix;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -10,10 +10,10 @@ import java.util.List;
 class MapLoopFixImplTest {
 
     @Mock
-    private MapHistoryImpl mapHistory;
+    private MapHistory mapHistory;
 
     @InjectMocks
-    private MapLoopFixImpl mapLoopFix;
+    private MapLoopFix mapLoopFix;
 
     @Test
     void testSinaiLoop() {

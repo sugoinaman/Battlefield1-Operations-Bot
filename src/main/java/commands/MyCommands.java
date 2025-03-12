@@ -1,7 +1,7 @@
 package commands;
 
 import config.Configuration;
-import implementation.MapLoopFixImpl;
+import implementation.MapLoopFix;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -30,7 +30,7 @@ public class MyCommands extends ListenerAdapter {
 
     private String[] availableMaps = new String[]{"Giants", "Fao", "Volga", "Verdun", "Prise", "Lupkow"};
     public List<String> setMaps = new ArrayList<>();
-    private static MapLoopFixImpl mapLoopFix;
+    private static MapLoopFix mapLoopFix;
     private static int curr = 0;
 
     public List<String> getSetMaps() {
@@ -63,6 +63,7 @@ public class MyCommands extends ListenerAdapter {
                 } catch (IOException e) {
                     e.fillInStackTrace();
                 }
+                break;
 
             case "customrotation":
 
@@ -76,10 +77,9 @@ public class MyCommands extends ListenerAdapter {
                 setMaps.add(event.getOption("rotation6").getAsString());
 
                 if(mapLoopFix.onMapLoopEvent()){
-                    System.out.println("bf.change to C");
+                    System.out.println("Map loop detected");
                     curr++;
                 }
-
         }
 
     }
