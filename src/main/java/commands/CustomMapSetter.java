@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -33,8 +34,14 @@ public class CustomMapSetter extends ListenerAdapter {
             return;
         }
         if (event.getName().equals("custommap")) {
-            event.deferReply().queue();
+            //event.deferReply().queue();
+            List<String> maps = event.getOptions().stream()
+                    .map(OptionMapping::getAsString)
+                    .collect(Collectors.toList());
 
+            // Do something with the list of maps
+            event.reply("Maps selected for rotation are: " + String.join(", ", maps)).queue();
+            mapHolder = new ArrayList<>(maps);
         }
     }
 
@@ -76,23 +83,4 @@ public class CustomMapSetter extends ListenerAdapter {
         }
     }
 
-
-//    @NotNull
-//    private static ArrayList<OptionData> getOptionDataOfDifferentMaps() {
-//        OptionData map1 = new OptionData(OptionType.STRING, "map1", "map to be set", true, true);
-//        OptionData map2 = new OptionData(OptionType.STRING, "map2", "map to be set", false, true);
-//        OptionData map3 = new OptionData(OptionType.STRING, "map3", "map to be set", false, true);
-//        OptionData map4 = new OptionData(OptionType.STRING, "map4", "map to be set", false, true);
-//        OptionData map5 = new OptionData(OptionType.STRING, "map5", "map to be set", false, true);
-//        OptionData map6 = new OptionData(OptionType.STRING, "map6", "map to be set", false, true);
-//        OptionData map7 = new OptionData(OptionType.STRING, "map7", "map to be set", false, true);
-//        OptionData map8 = new OptionData(OptionType.STRING, "map8", "map to be set", false, true);
-//        OptionData map9 = new OptionData(OptionType.STRING, "map9", "map to be set", false, true);
-//        OptionData map10 = new OptionData(OptionType.STRING, "map10", "map to be set", false, true);
-//        OptionData map11 = new OptionData(OptionType.STRING, "map11", "map to be set", false, true);
-//        OptionData map12 = new OptionData(OptionType.STRING, "map12", "map to be set", false, true);
-//        OptionData map13 = new OptionData(OptionType.STRING, "map13", "map to be set", false, true);
-//
-//        return new ArrayList<>(new ArrayList<>(Arrays.asList(map1, map2, map3, map4, map5, map6, map7, map8, map9, map10, map11, map12, map13)));
-//    }
 }
