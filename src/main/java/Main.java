@@ -1,6 +1,4 @@
-import commands.MapLoopSendText;
 import commands.MyCommands;
-import implementation.MapHistory;
 import implementation.MapLoopFix;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -14,11 +12,11 @@ public class Main {
                 .addEventListeners(new MyCommands())
                 .build();
 
-        MapHistory mapHistory = new MapHistory();
+
 
         MapLoopFix mapLoopFix = new MapLoopFix();
 
-        MapLoopSendText lol = new MapLoopSendText(jda, mapLoopFix);
+
     }
 
 }
