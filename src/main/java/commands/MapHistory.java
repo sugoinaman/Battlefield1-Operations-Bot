@@ -1,34 +1,57 @@
 package commands;
-
 import config.Configuration;
+import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.jetbrains.annotations.NotNull;
+import tools.MapManager;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class MyCommands extends ListenerAdapter {
+public class MapHistory extends ListenerAdapter {
 
+    Dotenv dotenv = Dotenv.configure()
+            .directory("./")
+            .load();
 
-    private String[] availableMaps = new String[]{"Giants", "Fao", "Volga", "Verdun", "Prise", "Lupkow"};
-    public List<String> setMaps = new ArrayList<>();
-    //    private static MapLoopFix mapLoopFix;
-    private static int curr = 0;
+    private String lastMap = null;
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final MapManager mapManager =  new MapManager();
+    private static final List<String> recentMaps = new ArrayList<>();
 
-    public List<String> getSetMaps() {
-        return setMaps;
+    public MapHistory() {
+        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 10, TimeUnit.SECONDS);
     }
 
-    public MyCommands() {
-
+    public final List <String> getRecentMaps(){
+        return new ArrayList<>(recentMaps);
     }
 
+    private void updateMapHistory() {
+        try {
+            String currentMap = mapManager.fetchCurrentMap();
+            if (currentMap == null || currentMap.equals(lastMap)) return; // Map didn't change!
+
+            mapManager.writeToFile(currentMap);
+            lastMap = currentMap;
+
+            if (recentMaps.size() == 2) {
+                recentMaps.removeFirst();
+                recentMaps.add(currentMap);
+            } else recentMaps.add(currentMap);
+        } catch (Exception e) {
+        }
+    }
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
 
@@ -53,8 +76,6 @@ public class MyCommands extends ListenerAdapter {
 
         }
     }
-
-
     @Override
     public void onGuildReady(@NotNull GuildReadyEvent event) {
         List<CommandData> commandData = new ArrayList<>();
@@ -62,4 +83,6 @@ public class MyCommands extends ListenerAdapter {
         event.getGuild().updateCommands().addCommands(commandData).queue();
 
     }
+
 }
+

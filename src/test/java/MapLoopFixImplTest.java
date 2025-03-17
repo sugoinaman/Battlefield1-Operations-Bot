@@ -1,5 +1,5 @@
-import implementation.MapHistory;
-import implementation.MapLoopFix;
+import commands.MapHistory;
+import commands.MapLoopFix;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
