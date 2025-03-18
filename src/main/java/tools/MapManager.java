@@ -7,16 +7,20 @@ import config.Configuration;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-/* This class has the following methods available
-    1.) fetchCurrentMap(): fetches the current running map
-    2.) API url returns maps which is inside an array called "servers" inside the json string
+/**
+ * This class has the following methods available
+ * <p> 1.) fetchCurrentMap(): fetches the current running map </p>
+ * <p> 2.) WriteToFile: writes to map.txt </p>
  */
 
 public class MapManager {
@@ -52,6 +56,43 @@ public class MapManager {
             writer.write(mapName + " at " + timestamp);
             writer.newLine();
         } catch (IOException e) {
+        }
+    }
+
+    /**
+     * This sends the map change command to the API
+     */
+    public void bfMapChange(int mapNumber) {
+        String urlString = "https://manager-api.gametools.network/api/changelevel";
+        String token = "123456789";
+        String groupId = "0a3488e2-848c-11ee-9ff7-02420a000912";
+        String serverId = "d7073b2c-8490-11ee-9ec4-02420a00091d";
+
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("accept", "application/json");
+            connection.setRequestProperty("token", token);
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+
+            String jsonInputString = String.format(
+                    "{\"groupid\":\"%s\",\"mapnumber\":\"%d\",\"serverid\":\"%s\"}",
+                    groupId, mapNumber, serverId
+            );
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            connection.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

@@ -24,7 +24,7 @@ public class MapHistory extends ListenerAdapter {
             .directory("./")
             .load();
 
-    private String lastMap = null;
+    private String previousMap = null;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final MapManager mapManager =  new MapManager();
     private static final List<String> recentMaps = new ArrayList<>();
@@ -40,10 +40,10 @@ public class MapHistory extends ListenerAdapter {
     private void updateMapHistory() {
         try {
             String currentMap = mapManager.fetchCurrentMap();
-            if (currentMap == null || currentMap.equals(lastMap)) return; // Map didn't change!
+            if (currentMap == null || currentMap.equals(previousMap)) return; // Map didn't change!
 
             mapManager.writeToFile(currentMap);
-            lastMap = currentMap;
+            previousMap = currentMap;
 
             if (recentMaps.size() == 2) {
                 recentMaps.removeFirst();
@@ -73,7 +73,6 @@ public class MapHistory extends ListenerAdapter {
             } catch (IOException e) {
                 e.fillInStackTrace();
             }
-
         }
     }
     @Override
@@ -81,8 +80,6 @@ public class MapHistory extends ListenerAdapter {
         List<CommandData> commandData = new ArrayList<>();
         commandData.add(Commands.slash("maphistory", "Shows maps played, history resets every 6:30AM"));
         event.getGuild().updateCommands().addCommands(commandData).queue();
-
     }
-
 }
 

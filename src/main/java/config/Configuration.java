@@ -15,4 +15,8 @@ public class Configuration {
     public static String getFILE_PATH() {
         return dotenv.get("FILE_PATH");
     }
+
+    public static String getGTToken(){
+        return dotenv.get("GT_TOKEN");
+    }
 }
