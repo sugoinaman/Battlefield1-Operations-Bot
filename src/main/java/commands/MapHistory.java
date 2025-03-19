@@ -75,11 +75,12 @@ public class MapHistory extends ListenerAdapter {
             }
         }
     }
-    @Override
-    public void onGuildReady(@NotNull GuildReadyEvent event) {
-        List<CommandData> commandData = new ArrayList<>();
-        commandData.add(Commands.slash("maphistory", "Shows maps played, history resets every 6:30AM"));
-        event.getGuild().updateCommands().addCommands(commandData).queue();
-    }
+//    @Override
+//    public void onGuildReady(@NotNull GuildReadyEvent event) {
+//        List<CommandData> commandData = new ArrayList<>();
+//        commandData.add(Commands.slash("maphistory", "Shows maps played, history resets every 6:30AM"));
+//        event.getGuild().updateCommands().addCommands(commandData).queue();
+//    }
+
 }
 

@@ -91,26 +91,7 @@ public class CustomMapSetter extends ListenerAdapter {
     /**
      * This is where we add the slash command
      */
-    @Override
-    public void onGuildReady(@NotNull GuildReadyEvent event) {
-        List<CommandData> commandData = new ArrayList<>();
-        commandData.add(
-                Commands.slash("custommap", "Sets a custom map from a FIXED list of maps")
-                        .addOptions(new OptionData(OptionType.STRING, "map1", "Required map to be set", true, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map2", "Required map to be set", true, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map3", "Required map to be set", true, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map4", "Optional Map to be set", false, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map5", "Optional Map to be set", false, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map6", "Optional Map to be set", false, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map7", "Optional Map to be set", false, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map8", "Optional Map to be set", false, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map9", "Optional Map to be set", false, true))
-                        .addOptions(new OptionData(OptionType.STRING, "map10", "Optional Map to be set", false, true))
-                        .setContexts(InteractionContextType.GUILD)
-                        .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS))
-        );
-        event.getGuild().updateCommands().addCommands(commandData).queue();
-    }
+
 
     /**
      * this is for the auto-completion of options
@@ -144,6 +125,11 @@ public class CustomMapSetter extends ListenerAdapter {
                 (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga")) ||
                 (currentMap.equals("amiens") && previousMap.equals("Scar"))) {
             previousMap = currentMap;
+            return;
+        }
+        if(currentMap.equals("Suez") && previousMap.equals("Fao") ||
+            currentMap.equals("Sinai") && previousMap.equals("Suez")){
+            previousMap=currentMap;
             return;
         }
         //ToDo: Need a separate check for fao rotation
