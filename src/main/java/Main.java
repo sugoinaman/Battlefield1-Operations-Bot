@@ -1,5 +1,6 @@
 import commands.CustomMapSetter;
 import commands.MapHistory;
+import config.Configuration;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 
@@ -7,10 +8,10 @@ public class Main {
 
     public static void main(String[] args) {
 
-        JDA jda = JDABuilder.createDefault("MTM0MTM0NjI1MzgzMjk3ODUyNQ.GwkSuk.NU5o2VYmGkoVMni8NfDQPHN290s1XVBvN0S2iI")
-                .addEventListeners(new CustomMapSetter())
+        JDA jda = JDABuilder.createDefault(Configuration.getDiscordToken())
                 .addEventListeners(new MapHistory())
                 .build();
+        jda.addEventListener(new CustomMapSetter(jda));
     }
 }
 

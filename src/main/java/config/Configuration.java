@@ -19,4 +19,7 @@ public class Configuration {
     public static String getGTToken(){
         return dotenv.get("GT_TOKEN");
     }
+    public static String getLOG_CHANNEL_ID(){
+        return dotenv.get("LOG_CHANNEL_ID");
+    }
 }

@@ -1,13 +1,11 @@
 package commands;
 import config.Configuration;
-import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,10 +16,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MapHistory extends ListenerAdapter {
-
-    Dotenv dotenv = Dotenv.configure()
-            .directory("./")
-            .load();
 
     private String previousMap = null;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -49,6 +43,7 @@ public class MapHistory extends ListenerAdapter {
                 recentMaps.add(currentMap);
             } else recentMaps.add(currentMap);
         } catch (Exception e) {
+            System.out.println("Something is wrong with updateMapHistory function, or maybe GT is down again!");
         }
     }
     @Override

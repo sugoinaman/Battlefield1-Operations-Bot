@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import config.Configuration;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,6 +53,7 @@ public class MapManager {
             writer.write(mapName + " at " + timestamp);
             writer.newLine();
         } catch (IOException e) {
+            System.out.println("Something is wrong with writeToFile method inside MapManager");
         }
     }
 
@@ -64,7 +62,7 @@ public class MapManager {
      */
     public void bfMapChange(int mapNumber) {
         String urlString = "https://manager-api.gametools.network/api/changelevel";
-        String token = "123456789";
+        String token = Configuration.getGTToken();
         String groupId = "0a3488e2-848c-11ee-9ff7-02420a000912";
         String serverId = "d7073b2c-8490-11ee-9ec4-02420a00091d";
 
@@ -90,9 +88,20 @@ public class MapManager {
             int responseCode = connection.getResponseCode();
             System.out.println("Response Code: " + responseCode);
 
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    connection.getInputStream(), StandardCharsets.UTF_8))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line.trim());
+                }
+                System.out.println("Response Body: " + response);
+                }
+
             connection.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("The change map API isn't working, GT is possibly down");
         }
+
     }
 }

@@ -1,6 +1,9 @@
 package commands;
 
+import config.Configuration;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -15,6 +18,9 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,9 +34,12 @@ public class CustomMapSetter extends ListenerAdapter {
 
     private List<String> mapHolder = new ArrayList<>(); //Contains maps entered by the user from slash commands
     private String previousMap = null;
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static ScheduledExecutorService scheduler = null;
     MapManager mapManager = new MapManager();
     private int c = 0;
+    private static final String LOG_CHANNEL_ID = Configuration.getLOG_CHANNEL_ID();
+    private JDA jda;
+    private boolean waitingForCurrentMapToFinish = false;
 
     // availableMaps are starting maps of an OPS because that's what we are allowed to set.
     private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
@@ -65,9 +74,10 @@ public class CustomMapSetter extends ListenerAdapter {
         hashMap.put("Fao Fortress", 23);
     }
 
-    public CustomMapSetter() {
-        scheduler.scheduleAtFixedRate(this::changeMap, 0, 10, TimeUnit.SECONDS);
+    public CustomMapSetter(JDA jda) {
+        this.jda = jda;
     }
+
 
     /**
      * Actual Logic which changes map from the list of maps entered by the user in the slash command
@@ -77,6 +87,19 @@ public class CustomMapSetter extends ListenerAdapter {
 
         try {
             String currentMap = mapManager.fetchCurrentMap();
+
+            // This part tries to avoid skipping the map being played currently, does not work for entire operations
+            // ToDo: Adding a check to avoid skipping map till entire OPS is completed can be implemented but who cares
+
+            if (waitingForCurrentMapToFinish) {
+                if (!currentMap.equals(previousMap)) {
+                    //Previous map which was set when slash command was ran will be checked till currentMap is different
+                    //This helps with letting the current map finish.
+                    waitingForCurrentMapToFinish = false;
+
+                    sendLog("Current map finished, starting the custom rotation.....");
+                } else return;
+            }
 
             // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
             // Edge Case 1: if the current map is what is supposed to be in the list then return
@@ -95,21 +118,22 @@ public class CustomMapSetter extends ListenerAdapter {
                     (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
                     (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
                     (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))) {
+                sendLog("Current map is a part of an existing operations, skipping map change....");
                 previousMap = currentMap;
                 return;
             }
 
             // Edge Case 3: this avoids a map change when the bot is first started and custom maps are JUST set. **ONLY WORKS WITH SHOCK OPS**
-            if (previousMap != null)
-            {
+            //ToDo: This check is redundant
+            if (previousMap != null) { //is now redundant since slash command runs set previousmap = fetch current map !!!
                 mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
+                sendLog("Map changed from " + previousMap + " to " + mapHolder.get(c));
                 c = (c + 1) % mapHolder.size();
-                // Edge Case 4:  Avoid multiple calls to map change to avoid potential map loop, for now sleep for 30 seconds in case API is slow (or i lose internet)
-                Thread.sleep(300000);
+                // Edge Case 4:  Avoid multiple calls to map change to avoid potential map loop, for now sleep for 300 seconds in case API is slow (or i lose internet)
+                Thread.sleep(3000000);
             }
-
         } catch (Exception e) {
-            System.out.println("GT is down lol");
+            sendLog("GameTools API is down!");
         }
     }
 
@@ -144,9 +168,25 @@ public class CustomMapSetter extends ListenerAdapter {
                     .map(OptionMapping::getAsString)
                     .collect(Collectors.toList());
             event.reply("Maps selected for rotation are: " + String.join(", ", customMapsSetByUser)).queue();
+            sendLog("List of maps to be looped has been updated to: " + String.join("-> ", customMapsSetByUser+ ". Waiting for current map to be finished before switching on"));
+
             mapHolder = customMapsSetByUser.stream().toList();
             c = 0; //reset the counter
+            startScheduler();
+            try {
+                previousMap = mapManager.fetchCurrentMap();
+            } catch (IOException | URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+            waitingForCurrentMapToFinish = true;
             System.out.println(mapHolder);
+        }
+        if (event.getName().equals("loopfixoff")) {
+
+            stopScheduler();
+            event.reply("Turning OFF the custom map loop").queue();
+            //ToDo: Check if I don't need to defer reply here
+            sendLog("Turning OFF custom map loop");
         }
     }
 
@@ -170,6 +210,46 @@ public class CustomMapSetter extends ListenerAdapter {
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
 
+        CommandData loopOffCommand = Commands.slash("loopfixoff", "Stops the custom map loop")
+                .setContexts(InteractionContextType.GUILD)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
+
         event.getGuild().upsertCommand(commandData).queue();
+        event.getGuild().upsertCommand(loopOffCommand).queue();
+
+
+    }
+
+
+    private void sendLog(String message) {
+        TextChannel logChannel = jda.getTextChannelById(LOG_CHANNEL_ID);
+        if (logChannel != null) {
+            System.out.println(message);
+            logChannel.sendMessage(message).queue();
+        } else{
+            System.out.println("log channel not found or inaccessible");
+        }
+    }
+
+    public void startScheduler() {
+        try {
+            if (scheduler==null || scheduler.isShutdown() || scheduler.isTerminated()) {
+                scheduler = Executors.newScheduledThreadPool(1);
+            }
+        } catch (Exception e) {
+            sendLog("Scheduler is null ");
+        }
+        scheduler.scheduleAtFixedRate(this::changeMap, 0, 10, TimeUnit.SECONDS);
+    }
+
+    public void stopScheduler() {
+        try {
+            if (scheduler != null && !scheduler.isShutdown()) {
+                scheduler.shutdown();
+                sendLog("Custom map loop turned off.");
+            }
+        } catch (Exception e) {
+            sendLog("Error turning off scheduler, it is already off");
+        }
     }
 }
