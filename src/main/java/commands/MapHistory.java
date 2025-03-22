@@ -4,7 +4,6 @@ import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
@@ -75,12 +74,9 @@ public class MapHistory extends ListenerAdapter {
             }
         }
     }
-//    @Override
-//    public void onGuildReady(@NotNull GuildReadyEvent event) {
-//        List<CommandData> commandData = new ArrayList<>();
-//        commandData.add(Commands.slash("maphistory", "Shows maps played, history resets every 6:30AM"));
-//        event.getGuild().updateCommands().addCommands(commandData).queue();
-//    }
-
+    @Override
+    public void onGuildReady(@NotNull GuildReadyEvent event) {
+        event.getGuild().upsertCommand(Commands.slash("maphistory", "Shows maps played, history resets every 6:30AM")).queue();
+    }
 }
 

@@ -15,10 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -33,10 +30,14 @@ public class CustomMapSetter extends ListenerAdapter {
     private String previousMap = null;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     MapManager mapManager = new MapManager();
+    private int c = 0;
 
-    private String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
+    // availableMaps are starting maps of an OPS because that's what we are allowed to set.
+    private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
 
-    private static HashMap<String,Integer> hashMap = new HashMap<>();
+    // all maps are mapped to an integer value which we get from GameTools, we do it because the map change API uses a map index rather than a name
+    private static final HashMap<String, Integer> hashMap = new HashMap<>();
+
     static {
         hashMap.put("Soissons", 0);
         hashMap.put("Achi Baba", 1);
@@ -65,8 +66,68 @@ public class CustomMapSetter extends ListenerAdapter {
     }
 
     public CustomMapSetter() {
-        scheduler.scheduleAtFixedRate(this::getCurrentMap, 0, 15, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::changeMap, 0, 10, TimeUnit.SECONDS);
     }
+
+    /**
+     * Actual Logic which changes map from the list of maps entered by the user in the slash command
+     * be careful
+     */
+    public void changeMap() {
+
+        try {
+            String currentMap = mapManager.fetchCurrentMap();
+
+            // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
+            // Edge Case 1: if the current map is what is supposed to be in the list then return
+            if (currentMap.equals(mapHolder.get(c))) {
+                previousMap = currentMap;
+                return;
+            }
+
+            //Edge Case 2: Check if it is part of the same operations, something that GHS doesn't do
+            if ((currentMap.equals("Argonne Forest") && previousMap.equals("Ballroom Blitz")) ||
+                    (currentMap.equals("Fort De Vaux") && previousMap.equals("Verdun Heights")) ||
+                    (currentMap.equals("Empire's Edge") && previousMap.equals("Monte Grappa")) ||
+                    (currentMap.equals("Achi Baba") && previousMap.equals("Cape Helles")) ||
+                    (currentMap.equals("Rupture") && previousMap.equals("Soissons")) ||
+                    (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga River")) ||
+                    (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
+                    (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
+                    (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))) {
+                previousMap = currentMap;
+                return;
+            }
+
+            // Edge Case 3: this avoids a map change when the bot is first started and custom maps are JUST set. **ONLY WORKS WITH SHOCK OPS**
+            if (previousMap != null)
+            {
+                mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
+                c = (c + 1) % mapHolder.size();
+                // Edge Case 4:  Avoid multiple calls to map change to avoid potential map loop, for now sleep for 30 seconds in case API is slow (or i lose internet)
+                Thread.sleep(300000);
+            }
+
+        } catch (Exception e) {
+            System.out.println("GT is down lol");
+        }
+    }
+
+
+    /**
+     * this is for the auto-completion of options in the slash command
+     */
+    @Override
+    public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
+        if (event.getName().equals("custommap")) {
+            List<Command.Choice> options = Stream.of(availableMaps)
+                    .filter(word -> word.startsWith(event.getFocusedOption().getValue())) // only display words that start with the user's current input
+                    .map(word -> new Command.Choice(word, word)) // map the words to choices
+                    .collect(Collectors.toList());
+            event.replyChoices(options).queue();
+        }
+    }
+
 
     /**
      * This method will handle the slash command
@@ -84,73 +145,31 @@ public class CustomMapSetter extends ListenerAdapter {
                     .collect(Collectors.toList());
             event.reply("Maps selected for rotation are: " + String.join(", ", customMapsSetByUser)).queue();
             mapHolder = customMapsSetByUser.stream().toList();
-            //ToDo: What if user changes his set maps, need to update maps in this list
+            c = 0; //reset the counter
+            System.out.println(mapHolder);
         }
     }
 
     /**
-     * This is where we add the slash command
-     */
-
-
-    /**
-     * this is for the auto-completion of options
+     * This is where we add the slash command and the options
      */
     @Override
-    public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
-        if (event.getName().equals("custommap")) {
-            List<Command.Choice> options = Stream.of(availableMaps)
-                    .filter(word -> word.startsWith(event.getFocusedOption().getValue())) // only display words that start with the user's current input
-                    .map(word -> new Command.Choice(word, word)) // map the words to choices
-                    .collect(Collectors.toList());
-            event.replyChoices(options).queue();
-        }
-    }
+    public void onGuildReady(@NotNull GuildReadyEvent event) {
 
-    /**
-     * Actual Logic which changes map from the list of maps entered by the user in the slash command
-     * be careful
-     */
-    public void changeMap() {
+        CommandData commandData = Commands.slash("custommap", "Sets a custom map from a FIXED list of maps")
+                .addOptions(new OptionData(OptionType.STRING, "map1", "Required map to be set", true, true))
+                .addOptions(new OptionData(OptionType.STRING, "map2", "Required map to be set", true, true))
+                .addOptions(new OptionData(OptionType.STRING, "map3", "Required map to be set", true, true))
+                .addOptions(new OptionData(OptionType.STRING, "map4", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map5", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map6", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map7", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map8", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map9", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map10", "Optional Map to be set", false, true))
+                .setContexts(InteractionContextType.GUILD)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
 
-        String currentMap = getCurrentMap();
-        int c = 0;
-        if (currentMap == null || currentMap.equals(previousMap)) return; // map didn't change
-
-        if ((currentMap.equals("Argonne") && previousMap.equals("Ball Room")) ||
-                (currentMap.equals("Fort") && previousMap.equals("Verdun")) ||
-                (currentMap.equals("empire") && previousMap.equals("monte")) ||
-                (currentMap.equals("Achi baba") && previousMap.equals("Cape Helles")) ||
-                (currentMap.equals("Rupture") && previousMap.equals("Soissons")) ||
-                (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga")) ||
-                (currentMap.equals("amiens") && previousMap.equals("Scar"))) {
-            previousMap = currentMap;
-            return;
-        }
-        if(currentMap.equals("Suez") && previousMap.equals("Fao") ||
-            currentMap.equals("Sinai") && previousMap.equals("Suez")){
-            previousMap=currentMap;
-            return;
-        }
-        //ToDo: Need a separate check for fao rotation
-
-        if (!mapHolder.isEmpty()) {
-           mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
-            c = (c + 1) % mapHolder.size();
-        }
-    }
-
-    /**
-     * This fetches current map every 10 seconds
-     * @return current map or null
-     */
-    private String getCurrentMap() {
-        try {
-            return mapManager.fetchCurrentMap();
-        }
-        catch (Exception e){
-            System.out.println("GT is probably down");
-        }
-        return null;
+        event.getGuild().upsertCommand(commandData).queue();
     }
 }
