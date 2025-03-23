@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,7 +44,7 @@ public class MapHistory extends ListenerAdapter {
                 recentMaps.add(currentMap);
             } else recentMaps.add(currentMap);
         } catch (Exception e) {
-            System.out.println("Something is wrong with updateMapHistory function, or maybe GT is down again!");
+            System.out.println("LocalTime.now().format(DateTimeFormatter.ofPattern(\"HH:mm:ss\"))"+Arrays.toString(e.getStackTrace()));
         }
     }
     @Override
@@ -51,8 +52,7 @@ public class MapHistory extends ListenerAdapter {
 
         if (event.getGuild() == null) return;
 
-
-        if (event.getName().equals("maphistory")) {
+        if (event.getName().equals("map_history")) {
             event.deferReply().queue();
             try {
                 BufferedReader br = new BufferedReader(new FileReader(Configuration.getFILE_PATH()));
@@ -71,7 +71,7 @@ public class MapHistory extends ListenerAdapter {
     }
     @Override
     public void onGuildReady(@NotNull GuildReadyEvent event) {
-        event.getGuild().upsertCommand(Commands.slash("maphistory", "Shows maps played, history resets every 6:30AM")).queue();
+        event.getGuild().upsertCommand(Commands.slash("map_history", "Shows maps history on OPS, history resets every 6:30AM")).queue();
     }
 }
 
