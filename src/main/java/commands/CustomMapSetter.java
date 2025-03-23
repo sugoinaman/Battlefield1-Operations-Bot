@@ -117,8 +117,8 @@ public class CustomMapSetter extends ListenerAdapter {
 
             // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
             // Edge Case 1: if the current map is what is supposed to be in the list then return
-            int index = (c == 0) ? 0 : (c - 1 + mapHolder.size()) % mapHolder.size(); // this is to avoid an edge case set by c= c+1 in later stages
-            if (currentMap.equals(mapHolder.get(index))) {
+            if (currentMap.equals(mapHolder.get(c))) {
+                c = (c + 1) % mapHolder.size();
                 previousMap = currentMap;
                 return;
             }
@@ -159,7 +159,7 @@ public class CustomMapSetter extends ListenerAdapter {
             sentTheOperationLog = false;
             lastMapChangeTime = Instant.now();
             sendLog("Map changed from " + currentMap + " to " + mapHolder.get(c));
-            c = (c + 1) % mapHolder.size();
+
         } catch (
                 Exception e) {
             sendLog("Caught an error. Here's the stack trace \n");
