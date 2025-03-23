@@ -48,9 +48,9 @@ public class CustomMapSetter extends ListenerAdapter {
     private JDA jda;
     private boolean waitingForCurrentMapToFinish = false;
     private Instant lastMapChangeTime = Instant.EPOCH;
-    private boolean operationSkipLogged = false;
+    private boolean sentTheOperationLog = false;
 
-
+    private boolean isCustomMapLoopOn = false;
 
     // availableMaps are starting maps of an OPS because that's what we are allowed to set.
     private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
@@ -90,10 +90,7 @@ public class CustomMapSetter extends ListenerAdapter {
     }
 
 
-    /**
-     * Actual Logic which changes map from the list of maps entered by the user in the slash command
-     * be careful
-     */
+    //Actual Logic which changes map from the list of maps entered by the user in the slash command be careful
     public void changeMap() {
 
         try {
@@ -108,12 +105,11 @@ public class CustomMapSetter extends ListenerAdapter {
             }
 
             if (waitingForCurrentMapToFinish) {
-
                 if (!currentMap.equals(previousMap)) {
                     //Previous map which was set when slash command was ran will be checked till currentMap is different
                     //This helps with letting the current map finish.
                     waitingForCurrentMapToFinish = false;
-                    sendLog("Current map finished, starting the custom rotation.....");
+                    sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Starting custom rotation....");
                 } else {
                     return;
                 }
@@ -121,52 +117,56 @@ public class CustomMapSetter extends ListenerAdapter {
 
             // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
             // Edge Case 1: if the current map is what is supposed to be in the list then return
-            int previousIndex = (c - 1 + mapHolder.size()) % mapHolder.size();
-            if (currentMap.equals(mapHolder.get(previousIndex))) {
+            int index = (c == 0) ? 0 : (c - 1 + mapHolder.size()) % mapHolder.size(); // this is to avoid an edge case set by c= c+1 in later stages
+            if (currentMap.equals(mapHolder.get(index))) {
                 previousMap = currentMap;
                 return;
             }
 
             //Edge Case 2: Check if it is part of the same operations, something that GHS doesn't do
-            // Trim and null check before comparing
-            String trimmedCurrentMap = currentMap != null ? currentMap.trim() : "";
-            String trimmedPreviousMap = previousMap != null ? previousMap.trim() : "";
-
-            if ((trimmedCurrentMap.equals("Argonne Forest") && trimmedPreviousMap.equals("Ballroom Blitz")) ||
-                    (trimmedCurrentMap.equals("Fort De Vaux") && trimmedPreviousMap.equals("Verdun Heights")) ||
-                    (trimmedCurrentMap.equals("Empire's Edge") && trimmedPreviousMap.equals("Monte Grappa")) ||
-                    (trimmedCurrentMap.equals("Achi Baba") && trimmedPreviousMap.equals("Cape Helles")) ||
-                    (trimmedCurrentMap.equals("Rupture") && trimmedPreviousMap.equals("Soissons")) ||
-                    (trimmedCurrentMap.equals("Tsaritsyn") && trimmedPreviousMap.equals("Volga River")) ||
-                    (trimmedCurrentMap.equals("Amiens") && trimmedPreviousMap.equals("St Quentin Scar")) ||
-                    (trimmedCurrentMap.equals("Suez") && trimmedPreviousMap.equals("Fao Fortress")) ||
-                    (trimmedCurrentMap.equals("Sinai Desert") && trimmedPreviousMap.equals("Suez"))) {
-
-                if (!operationSkipLogged) {
-                    sendLog("Current map is a part of an existing operations, skipping map change....");
-                    operationSkipLogged = true;  // Prevent repeated logs
+            if ((currentMap.equals("Argonne Forest") && previousMap.equals("Ballroom Blitz")) ||
+                    (currentMap.equals("Fort De Vaux") && previousMap.equals("Verdun Heights")) ||
+                    (currentMap.equals("Empire's Edge") && previousMap.equals("Monte Grappa")) ||
+                    (currentMap.equals("Achi Baba") && previousMap.equals("Cape Helles")) ||
+                    (currentMap.equals("Rupture") && previousMap.equals("Soissons")) ||
+                    (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga River")) ||
+                    (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
+                    (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
+                    (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))) {
+                if (sentTheOperationLog) {
+                    // we already sent the logs, no need to send it again
+                    return;
+                } else if (!sentTheOperationLog) {
+                    sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Skipping map change....");
+                    sentTheOperationLog = true;
+                    return;
                 }
-                previousMap = currentMap;
-                return;
             }
+
+//                if (!operationSkipLogged) {
+//                    sendLog("Current map is a part of an existing operations, skipping map change....");
+//                    operationSkipLogged = true;  // Prevent repeated logs
+//                }
+//                previousMap = currentMap;
+            //ToDo: possible error
+
+//                return;
+
 
             // All Good changing map here
-            TextChannel logChannel = jda.getTextChannelById(LOG_CHANNEL_ID);
-            if (logChannel != null) {
-                logChannel.sendMessage("The current map is: " + currentMap  + " and the previous map was: " + previousMap + ". " + "Switching maps....").queue();
-            }
+            sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Switching maps....");
             mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
-            operationSkipLogged = false;
+            sentTheOperationLog = false;
             lastMapChangeTime = Instant.now();
             sendLog("Map changed from " + currentMap + " to " + mapHolder.get(c));
             c = (c + 1) % mapHolder.size();
-            // Edge Case 4:  Avoid multiple calls to map change to avoid potential map loop, for now sleep for 60 seconds in case API is slow (or i lose internet)
-
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
+            sendLog("Caught an error. Here's the stack trace \n");
             sendLog(Arrays.toString(e.getStackTrace()));
+
         }
     }
-
 
     /**
      * this is for the auto-completion of options in the slash command
@@ -198,9 +198,9 @@ public class CustomMapSetter extends ListenerAdapter {
                     .map(OptionMapping::getAsString)
                     .collect(Collectors.toList());
             event.reply("Maps selected for rotation are: " + String.join(", ", customMapsSetByUser)).queue();
-            sendLog("List of maps to be looped has been updated to: " + String.join("-> ", customMapsSetByUser + ". Waiting for current map to be finished before turning on"));
+            sendLog("List of maps to be looped has been updated to: " +( String.join("-> ", customMapsSetByUser)) + ". Waiting for current map to be finished before turning on");
 
-            mapHolder = customMapsSetByUser.stream().toList();
+            mapHolder = new ArrayList<>(customMapsSetByUser);
             c = 0; //reset the counter
             startScheduler();
             try {
@@ -210,12 +210,23 @@ public class CustomMapSetter extends ListenerAdapter {
             }
             waitingForCurrentMapToFinish = true;
             System.out.println(mapHolder);
+            isCustomMapLoopOn = true;
         }
         if (event.getName().equals("toggle_off")) {
-            event.reply("Turned off custom map rotation").queue();
-            mapHolder.clear();
-            stopScheduler();
-            sendLog("Turning OFF custom map loop");
+            if(isCustomMapLoopOn) {
+                event.reply("Turned off custom map rotation").queue();
+                try {
+                    mapHolder.clear();
+                } catch (Exception e) {
+                    System.out.println("Error clearing mapHolder");
+                    sendLog("Error clearing mapHolder");
+                }
+                stopScheduler();
+            }
+            else{
+                event.reply("Cannot switch custom map loop because it wasn't ON").queue();
+                sendLog("Cannot switch custom map loop because it wasn't ON");
+            }
         }
     }
 
@@ -236,6 +247,13 @@ public class CustomMapSetter extends ListenerAdapter {
                 .addOptions(new OptionData(OptionType.STRING, "map8", "Optional Map to be set", false, true))
                 .addOptions(new OptionData(OptionType.STRING, "map9", "Optional Map to be set", false, true))
                 .addOptions(new OptionData(OptionType.STRING, "map10", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map11", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map12", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map13", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map14", "Optional Map to be set", false, true))
+                .addOptions(new OptionData(OptionType.STRING, "map15", "Optional Map to be set", false, true))
+
+
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
 
@@ -252,8 +270,8 @@ public class CustomMapSetter extends ListenerAdapter {
         TextChannel logChannel = jda.getTextChannelById(LOG_CHANNEL_ID);
         if (logChannel != null) {
             String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            System.out.println(currentTime+"   " +message);
-            logChannel.sendMessage(currentTime+"   "+ message).queue();
+            System.out.println(currentTime + "   " + message);
+            logChannel.sendMessage(currentTime + "   " + message).queue();
         } else {
             System.out.println("log channel not found or inaccessible");
         }
@@ -281,3 +299,7 @@ public class CustomMapSetter extends ListenerAdapter {
         }
     }
 }
+
+
+//ToDo: Have a command to check what the schedulor is doing, so we can be sure toggle_off actually worked.
+//ToDo: Another big BUG is when you set operations from the rotation itself for example Ballroom after amiens is what we usually get but if u put it manually it will cause issues.
