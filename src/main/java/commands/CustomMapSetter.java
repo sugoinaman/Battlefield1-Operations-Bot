@@ -128,7 +128,6 @@ public class CustomMapSetter extends ListenerAdapter {
             // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
             // Edge Case 1: if the current map is what is supposed to be in the list then return
             if (currentMap.equals(mapHolder.get(c))) {
-
                 return;
             }
 
