@@ -128,25 +128,29 @@ public class CustomMapSetter extends ListenerAdapter {
             // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
             // Edge Case 1: if the current map is what is supposed to be in the list then return
             if (currentMap.equals(mapHolder.get(c))) {
-                c = (c + 1) % mapHolder.size();
+
                 return;
             }
 
             //Edge Case 2: Check if it is part of the same operations, something that GHS doesn't do
-            if ((currentMap.equals("Argonne Forest") && previousMap.equals("Ballroom Blitz")) ||
-                    (currentMap.equals("Fort De Vaux") && previousMap.equals("Verdun Heights")) ||
-                    (currentMap.equals("Empire's Edge") && previousMap.equals("Monte Grappa")) ||
-                    (currentMap.equals("Achi Baba") && previousMap.equals("Cape Helles")) ||
-                    (currentMap.equals("Rupture") && previousMap.equals("Soissons")) ||
-                    (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga River")) ||
-                    (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
-                    (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
-                    (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))) {
-                if (!sentTheOperationLog) {
-                    sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Skipping map change....");
-                    sentTheOperationLog = true;
+            try {
+                if ((currentMap.equals("Argonne Forest") && previousMap.equals("Ballroom Blitz")) ||
+                        (currentMap.equals("Fort De Vaux") && previousMap.equals("Verdun Heights")) ||
+                        (currentMap.equals("Empire's Edge") && previousMap.equals("Monte Grappa")) ||
+                        (currentMap.equals("Achi Baba") && previousMap.equals("Cape Helles")) ||
+                        (currentMap.equals("Rupture") && previousMap.equals("Soissons")) ||
+                        (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga River")) ||
+                        (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
+                        (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
+                        (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))) {
+                    if (!sentTheOperationLog) {
+                        sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Skipping map change....");
+                        sentTheOperationLog = true;
+                    }
+                    return;
                 }
-                return;
+            } catch (Exception e) {
+                System.out.println("Error occurred in check for current map and previous map because previous map was null. this is normal and expected when bot runs for the first time.");
             }
 
             // All Good changing map here
@@ -155,6 +159,7 @@ public class CustomMapSetter extends ListenerAdapter {
             sentTheOperationLog = false;
             lastMapChangeTime = Instant.now();
             sendLog("Map changed from " + currentMap + " to " + mapHolder.get(c));
+            c = (c + 1) % mapHolder.size();
 
         } catch (
                 Exception e) {
@@ -212,6 +217,7 @@ public class CustomMapSetter extends ListenerAdapter {
                 event.reply("Turned off custom map rotation").queue();
                 try {
                     mapHolder.clear();
+                    c=0;
                 } catch (Exception e) {
                     System.out.println("Error clearing mapHolder");
                     sendLog("Error clearing mapHolder");
