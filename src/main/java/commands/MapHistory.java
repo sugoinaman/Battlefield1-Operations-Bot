@@ -21,13 +21,13 @@ public class MapHistory extends ListenerAdapter {
     private String previousMap = null;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final MapManager mapManager =  new MapManager();
-    private static final List<String> recentMaps = new ArrayList<>();
+    private static List<String> recentMaps = new ArrayList<>();
 
     public MapHistory() {
-        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 10, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 5, TimeUnit.SECONDS);
     }
 
-    public final List <String> getRecentMaps(){
+    public static List <String> getRecentMaps(){
         return new ArrayList<>(recentMaps);
     }
 
@@ -42,7 +42,8 @@ public class MapHistory extends ListenerAdapter {
             if (recentMaps.size() == 2) {
                 recentMaps.removeFirst();
                 recentMaps.add(currentMap);
-            } else recentMaps.add(currentMap);
+            }
+            else recentMaps.add(currentMap);
         } catch (Exception e) {
             System.out.println("LocalTime.now().format(DateTimeFormatter.ofPattern(\"HH:mm:ss\"))"+Arrays.toString(e.getStackTrace()));
         }
