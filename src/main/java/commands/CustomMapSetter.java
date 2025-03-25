@@ -50,8 +50,8 @@ public class CustomMapSetter extends ListenerAdapter {
     private Instant lastMapChangeTime = Instant.EPOCH;
     private boolean sentTheOperationLog = false;
     private boolean isCustomMapLoopOn = false;
-    String currentMapWhenCustomCommand = null;
-
+    private String currentMapWhenCustomCommand = null;
+    private String b = null;
     private int c = 0;
 
     // availableMaps are starting maps of an OPS because that's what we are allowed to set.
@@ -91,85 +91,47 @@ public class CustomMapSetter extends ListenerAdapter {
     }
 
 
-    //Actual Logic which changes map from the list of maps entered by the user in the slash command be careful
     public void changeMap() {
-
         try {
             String currentMapAfterCustomCommand = mapManager.fetchCurrentMap();
-            String currentMap = null;
-            String previousMap = null;
+            String a = mapManager.fetchCurrentMap(); // Updated 10 seconds.
 
-            if (MapHistory.getRecentMaps().size() == 1) {
-                currentMap = MapHistory.getRecentMaps().getFirst();
-            } else {
-                currentMap = MapHistory.getRecentMaps().get(1);
-                previousMap = MapHistory.getRecentMaps().get(0);
-            }
 
-            // Check if we’re in cooldown after a map change
             if (Duration.between(lastMapChangeTime, Instant.now()).getSeconds() < 60) {
                 return;
             }
 
-            // EdgeCase 1: This part tries to avoid skipping the map being played currently, does not work for entire operations
-            //ToDo: This check only happens when map list is updated so it only needs to run once, if I move it to a separate method so it only runs once when list is updated
-            // I could potentially get around a few more edge cases. but for now this needs to suffice.
+
             if (waitingForCurrentMapToFinish) {
                 if (currentMapWhenCustomCommand.equals(currentMapAfterCustomCommand)) {
                     return;
                 } else {
-                    //Previous map which was set when slash command was ran will be checked till currentMap is different
-                    //This helps with letting the current map finish.
                     waitingForCurrentMapToFinish = false;
-                    sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Starting custom rotation....");
+                    sendLog("The current map is: " + a + " and the previous map was: " + b + ". " + "Starting custom rotation....");
                 }
             }
 
-            // Check if the currentMap is the map set by user, here C is the index of the list of maps inputted by the user in mapHolder
-            // Edge Case 1: if the current map is what is supposed to be in the list then return
-            if (currentMap.equals(mapHolder.get(c))) {
-                return;
-            }
-
-            //Edge Case 2: Check if it is part of the same operations, something that GHS doesn't do
-            try {
-                if ((currentMap.equals("Argonne Forest") && previousMap.equals("Ballroom Blitz")) ||
-                        (currentMap.equals("Fort De Vaux") && previousMap.equals("Verdun Heights")) ||
-                        (currentMap.equals("Empire's Edge") && previousMap.equals("Monte Grappa")) ||
-                        (currentMap.equals("Achi Baba") && previousMap.equals("Cape Helles")) ||
-                        (currentMap.equals("Rupture") && previousMap.equals("Soissons")) ||
-                        (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga River")) ||
-                        (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
-                        (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
-                        (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))) {
-                    if (!sentTheOperationLog) {
-                        sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "Skipping map change....");
-                        sentTheOperationLog = true;
-                    }
+            if (!b.equals(a)) {
+                if (mapManager.isCurrentMapPartOfOperation(a, b)) {
+                    sendLog(a + " OPS continued from " + b+" Skipping");
                     return;
                 }
-            } catch (Exception e) {
-                System.out.println("Error occurred in check for current map and previous map because previous map was null. this is normal and expected when bot runs for the first time.");
+                else {
+                    sendLog("Current map: " + a + " || Previous map was: " + b + " || " + "c= " + c + " || " + "Switching maps to: "+mapHolder.get(c));
+                    mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
+                    b = mapHolder.get(c);
+                    sentTheOperationLog = false;
+                    lastMapChangeTime = Instant.now();
+                    sendLog("Map changed from " + a + " to " + mapHolder.get(c));
+                    c = (c + 1) % mapHolder.size();
+                }
             }
-
-            // All Good changing map here
-            sendLog("The current map is: " + currentMap + " and the previous map was: " + previousMap + ". " + "The value of counter is"+ c+ ". "+"Switching maps....");
-            mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
-            sentTheOperationLog = false;
-            lastMapChangeTime = Instant.now();
-            sendLog("Map changed from " + currentMap + " to " + mapHolder.get(c));
-            c = (c + 1) % mapHolder.size();
-
-        } catch (
-                Exception e) {
-            sendLog("Caught an error. Here's the stack trace \n");
-            sendLog(Arrays.toString(e.getStackTrace()));
-
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
 
-    //this is for the auto-completion of options in the slash command
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
         if (event.getName().equals("custom_map")) {
@@ -181,12 +143,6 @@ public class CustomMapSetter extends ListenerAdapter {
         }
     }
 
-
-    /**
-     * This method will handle the slash command
-     *
-     * @param event: the event itself
-     */
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
 
@@ -204,19 +160,22 @@ public class CustomMapSetter extends ListenerAdapter {
             startScheduler();
             try {
                 currentMapWhenCustomCommand = mapManager.fetchCurrentMap();
-            } catch (IOException | URISyntaxException e) {
-                throw new RuntimeException(e);
+                b = currentMapWhenCustomCommand;
+            } catch (Exception e) {
+                System.out.println("Error with fetching current map, def issue with GT");
             }
+
             waitingForCurrentMapToFinish = true;
             System.out.println(mapHolder);
             isCustomMapLoopOn = true;
+
         }
         if (event.getName().equals("toggle_off")) {
             if (isCustomMapLoopOn) {
                 event.reply("Turned off custom map rotation").queue();
                 try {
                     mapHolder.clear();
-                    c=0;
+                    c = 0;
                 } catch (Exception e) {
                     System.out.println("Error clearing mapHolder");
                     sendLog("Error clearing mapHolder");
@@ -229,9 +188,6 @@ public class CustomMapSetter extends ListenerAdapter {
         }
     }
 
-    /**
-     * This is where we add the slash command and the options
-     */
     @Override
     public void onGuildReady(@NotNull GuildReadyEvent event) {
 
@@ -263,7 +219,6 @@ public class CustomMapSetter extends ListenerAdapter {
         event.getGuild().upsertCommand(commandData).queue();
         event.getGuild().upsertCommand(loopOffCommand).queue();
     }
-
 
     private void sendLog(String message) {
         TextChannel logChannel = jda.getTextChannelById(LOG_CHANNEL_ID);
