@@ -1,7 +1,1 @@
-sendLog("The current map is: " + a + " and the previous map was: " + b + ". " + "The value of counter is" + c + ". " + "Switching maps....");
-                    mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
-                    b = mapHolder.get(c);
-                    sentTheOperationLog = false;
-                    lastMapChangeTime = Instant.now();
-                    sendLog("Map changed from " + a + " to " + mapHolder.get(c));
-                    c = (c + 1) % mapHolder.size();
+if the map change command is called too frequently tag the support staff and alert them

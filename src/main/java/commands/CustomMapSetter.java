@@ -113,11 +113,14 @@ public class CustomMapSetter extends ListenerAdapter {
 
             if (!b.equals(a)) {
                 if (mapManager.isCurrentMapPartOfOperation(a, b)) {
-                    sendLog(a + " OPS continued from " + b+" Skipping");
+                    if (!sentTheOperationLog) {
+                        sendLog("The current map is: " + a + " and the previous map was: " + b + ". " + "Skipping map change....");
+                        sentTheOperationLog = true;
+                    }
                     return;
                 }
                 else {
-                    sendLog("Current map: " + a + " || Previous map was: " + b + " || " + "c= " + c + " || " + "Switching maps to: "+mapHolder.get(c));
+                    sendLog("Current map: " + a + " | Previous map was: " + b + " | " + "c= " + c + " | " + "Switching maps to: "+mapHolder.get(c));
                     mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
                     b = mapHolder.get(c);
                     sentTheOperationLog = false;
@@ -125,6 +128,7 @@ public class CustomMapSetter extends ListenerAdapter {
                     sendLog("Map changed from " + a + " to " + mapHolder.get(c));
                     c = (c + 1) % mapHolder.size();
                 }
+
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
