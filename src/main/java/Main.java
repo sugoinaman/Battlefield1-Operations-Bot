@@ -3,7 +3,6 @@ import commands.MapHistory;
 import config.Configuration;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import tools.MapManager;
 
 public class Main {
 

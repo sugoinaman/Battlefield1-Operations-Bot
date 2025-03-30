@@ -18,15 +18,11 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -100,8 +96,7 @@ public class CustomMapSetter extends ListenerAdapter {
             if (Duration.between(lastMapChangeTime, Instant.now()).getSeconds() < 60) {
                 return;
             }
-
-
+            
             if (waitingForCurrentMapToFinish) {
                 if (currentMapWhenCustomCommand.equals(currentMapAfterCustomCommand)) {
                     return;
