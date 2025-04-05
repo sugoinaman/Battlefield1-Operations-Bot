@@ -3,7 +3,7 @@ package config;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Configuration {
-    private final static  Dotenv dotenv = Dotenv.configure()
+    private final static Dotenv dotenv = Dotenv.configure()
             .directory("./")
             .load();
 
@@ -14,5 +14,13 @@ public class Configuration {
 
     public static String getFILE_PATH() {
         return dotenv.get("FILE_PATH");
+    }
+
+    public static String getGTToken() {
+        return dotenv.get("GT_TOKEN");
+    }
+
+    public static String getLOG_CHANNEL_ID() {
+        return dotenv.get("LOG_CHANNEL_ID");
     }
 }

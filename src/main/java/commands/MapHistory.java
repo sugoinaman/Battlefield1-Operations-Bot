@@ -1,94 +1,78 @@
 package commands;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import config.Configuration;
-import io.github.cdimascio.dotenv.Dotenv;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import org.jetbrains.annotations.NotNull;
+import tools.MapManager;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MapHistory {
+public class MapHistory extends ListenerAdapter {
 
-    Dotenv dotenv = Dotenv.configure()
-            .directory("./")
-            .load();
-
-    private static final Logger log = LoggerFactory.getLogger(MapHistory.class);
-    private static String lastMap = null;
-    private static final List<String> mapHistory = new ArrayList<>();
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private final String FILE_PATH = Configuration.getFILE_PATH();
-    private static final String NEWA_URL = "https://api.gametools.network/bf1/servers/?name=%5Bnew%21%5DAllMap%20Operation%20%7C%20discord.gg%2Fnewa%20%7C%20NoHacker%20HappyGame&platform=pc&limit=10&region=all&lang=en-us";
+    private String previousMap = null;
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final MapManager mapManager =  new MapManager();
+    private static List<String> recentMaps = new ArrayList<>();
 
     public MapHistory() {
-        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 1, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 5, TimeUnit.SECONDS);
     }
 
-    private String fetchCurrentMap() throws IOException, URISyntaxException {
-        URI uri = new URI(NEWA_URL);
-        JsonNode serversArray = getServersArray(uri.toURL());
-
-        if (serversArray.isArray() && !serversArray.isEmpty()) {
-            return serversArray.get(0).path("currentMap").asText();
-        }
-        return null;
+    public static List <String> getRecentMaps(){
+        return new ArrayList<>(recentMaps);
     }
 
     private void updateMapHistory() {
         try {
-            String currentMap = fetchCurrentMap();
-            if (currentMap == null || currentMap.equals(lastMap)) return;
+            String currentMap = mapManager.fetchCurrentMap();
+            if (currentMap == null || currentMap.equals(previousMap)) return; // Map didn't change!
 
-            mapHistory.add(currentMap);
-            writeToFile(currentMap);
+            mapManager.writeToFile(currentMap);
+            previousMap = currentMap;
 
-            log.info("New Map Detected: {}", currentMap);
-            if (lastMap != null) log.info("Last Map was: {}", lastMap);
-
-            lastMap = currentMap;
+            if (recentMaps.size() == 2) {
+                recentMaps.removeFirst();
+                recentMaps.add(currentMap);
+            }
+            else recentMaps.add(currentMap);
         } catch (Exception e) {
-            log.error("Error updating map history", e);
+            System.out.println("LocalTime.now().format(DateTimeFormatter.ofPattern(\"HH:mm:ss\"))"+Arrays.toString(e.getStackTrace()));
         }
     }
+    @Override
+    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
 
-    public List<String> mapHistory() {
-        return new ArrayList<>(mapHistory); // Return a copy of the list
-    }
+        if (event.getGuild() == null) return;
 
-    private JsonNode getServersArray(URL url) throws IOException {
+        if (event.getName().equals("map_history")) {
+            event.deferReply().queue();
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(Configuration.getFILE_PATH()));
+                StringBuilder history = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    history.append(line).append("\n");
+                }
+                br.close();
+                event.getHook().sendMessage("Played maps: " + history).queue();
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode = objectMapper.readTree(url);
-
-        return rootNode.path("servers");
-        //extracted servers from array and returns empty array if it doesn't exist
-    }
-
-    private void writeToFile(String mapName) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-
-            ZonedDateTime cetTime = ZonedDateTime.now(ZoneId.of("Europe/Berlin")); // CET/CEST timezone
-            String timestamp = cetTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
-            writer.write(mapName + " at " + timestamp);
-            writer.newLine();
-        } catch (IOException e) {
-            log.error("Error writing to file", e);
+            } catch (IOException e) {
+                e.fillInStackTrace();
+            }
         }
+    }
+    @Override
+    public void onGuildReady(@NotNull GuildReadyEvent event) {
+        event.getGuild().upsertCommand(Commands.slash("map_history", "Shows maps history on OPS, history resets every 6:30AM")).queue();
     }
 }
 
