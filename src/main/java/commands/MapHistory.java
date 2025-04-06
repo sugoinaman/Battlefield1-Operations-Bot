@@ -24,7 +24,7 @@ public class MapHistory extends ListenerAdapter {
     private static List<String> recentMaps = new ArrayList<>();
 
     public MapHistory() {
-        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 5, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 30, TimeUnit.SECONDS);
     }
 
     public static List <String> getRecentMaps(){
@@ -33,7 +33,7 @@ public class MapHistory extends ListenerAdapter {
 
     private void updateMapHistory() {
         try {
-            String currentMap = mapManager.fetchCurrentMap();
+            String currentMap = mapManager.getCurrentMap();
             if (currentMap == null || currentMap.equals(previousMap)) return; // Map didn't change!
 
             mapManager.writeToFile(currentMap);

@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import config.Configuration;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -25,7 +22,7 @@ public class MapManager {
     private final String FILE_PATH = Configuration.getFILE_PATH();
     private static final String NEWA_URL = "https://api.gametools.network/bf1/servers/?name=%5Bnew%21%5DAllMap%20Operation%20%7C%20discord.gg%2Fnewa%20%7C%20NoHacker%20HappyGame&platform=pc&limit=10&region=all&lang=en-us";
 
-    public String fetchCurrentMap() throws IOException, URISyntaxException {
+    public String getCurrentMap() throws IOException, URISyntaxException {
 
         URI uri = new URI(NEWA_URL);
         JsonNode serversArray = getServersArray(uri.toURL());
@@ -34,6 +31,16 @@ public class MapManager {
             return serversArray.get(0).path("currentMap").asText();
         }
         return null;
+    }
+
+    public int getPlayerCount() throws IOException, URISyntaxException {
+        URI uri = new URI(NEWA_URL);
+        JsonNode serversArray = getServersArray(uri.toURL());
+
+        if (serversArray.isArray() && !serversArray.isEmpty()) {
+            return serversArray.get(0).path("playerAmount").asInt();
+        }
+        return 64;
     }
 
     private JsonNode getServersArray(URL url) throws IOException {
@@ -114,7 +121,9 @@ public class MapManager {
                 (currentMap.equals("Tsaritsyn") && previousMap.equals("Volga River")) ||
                 (currentMap.equals("Amiens") && previousMap.equals("St Quentin Scar")) ||
                 (currentMap.equals("Suez") && previousMap.equals("Fao Fortress")) ||
-                (currentMap.equals("Sinai Desert") && previousMap.equals("Suez"))){
+                (currentMap.equals("Sinai Desert") && previousMap.equals("Suez")) ||
+                (currentMap.equals("Sinai Desert") && previousMap.equals("Fao Fortress"))
+        ) {
             return true;
         }
         return false;
