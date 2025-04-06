@@ -121,6 +121,7 @@ public class CustomMapSetter extends ListenerAdapter {
                     sendLog("Map to be set is " + mapHolder.get(c)+". and map from natural rotation is "+a+". Skip map change!");
                     b = mapHolder.get(c);
                     c++;
+                    sentTheOperationLog = false;
                     lastMapChangeTime = Instant.now(); // Wait 60 more seconds here
                     return;
                 } else {
