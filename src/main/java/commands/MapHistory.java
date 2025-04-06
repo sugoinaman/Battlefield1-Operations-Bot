@@ -27,9 +27,6 @@ public class MapHistory extends ListenerAdapter {
         scheduler.scheduleAtFixedRate(this::updateMapHistory, 0, 30, TimeUnit.SECONDS);
     }
 
-    public static List <String> getRecentMaps(){
-        return new ArrayList<>(recentMaps);
-    }
 
     private void updateMapHistory() {
         try {
