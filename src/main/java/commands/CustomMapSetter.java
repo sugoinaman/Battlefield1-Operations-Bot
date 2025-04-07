@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -88,15 +89,18 @@ public class CustomMapSetter extends ListenerAdapter {
 
 
     public void changeMap() {
+
         try {
-            String currentMapAfterCustomCommand = mapManager.fetchCurrentMap();
-            String a = mapManager.fetchCurrentMap(); // Updated 10 seconds.
+            if (mapManager.getPlayerCount() < 10) { // stop the custom map when server is dead!
+                stopScheduler();
+            }
+            String currentMapAfterCustomCommand = mapManager.getCurrentMap();
+            String a = mapManager.getCurrentMap(); // Updated 5 seconds.
 
-
-            if (Duration.between(lastMapChangeTime, Instant.now()).getSeconds() < 60) {
+            if (Duration.between(lastMapChangeTime, Instant.now()).getSeconds() < 60) { //wait 60 seconds after changing maps
                 return;
             }
-            
+
             if (waitingForCurrentMapToFinish) {
                 if (currentMapWhenCustomCommand.equals(currentMapAfterCustomCommand)) {
                     return;
@@ -113,12 +117,20 @@ public class CustomMapSetter extends ListenerAdapter {
                         sentTheOperationLog = true;
                     }
                     return;
-                }
-                else {
-                    sendLog("Current map: " + a + " | Previous map was: " + b + " | " + "c= " + c + " | " + "Switching maps to: "+mapHolder.get(c));
+                } else if (a.equals(mapHolder.get(c))) {
+                    sendLog("Map to be set is " + mapHolder.get(c)+". and map from natural rotation is "+a+". Skip map change!");
+                    b = mapHolder.get(c);
+                    c++;
+                    sentTheOperationLog = false;
+                    lastMapChangeTime = Instant.now(); // Wait 60 more seconds here
+                    return;
+                } else {
+                    sendLog("Current map: " + a + " | Previous map was: " + b + " | " + "c = " + c + " | " + "Switching maps to: " + mapHolder.get(c));
+
                     mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
                     b = mapHolder.get(c);
                     sentTheOperationLog = false;
+
                     lastMapChangeTime = Instant.now();
                     sendLog("Map changed from " + a + " to " + mapHolder.get(c));
                     c = (c + 1) % mapHolder.size();
@@ -158,7 +170,7 @@ public class CustomMapSetter extends ListenerAdapter {
             c = 0; //reset the counter
             startScheduler();
             try {
-                currentMapWhenCustomCommand = mapManager.fetchCurrentMap();
+                currentMapWhenCustomCommand = mapManager.getCurrentMap();
                 b = currentMapWhenCustomCommand;
             } catch (Exception e) {
                 System.out.println("Error with fetching current map, def issue with GT");
@@ -238,7 +250,7 @@ public class CustomMapSetter extends ListenerAdapter {
         } catch (Exception e) {
             sendLog("Scheduler is null ");
         }
-        scheduler.scheduleAtFixedRate(this::changeMap, 1, 10, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::changeMap, 1, 5, TimeUnit.SECONDS);
         //This delay helps update the recentMaps which we get from MapHistory class
     }
 
@@ -256,5 +268,7 @@ public class CustomMapSetter extends ListenerAdapter {
 
 
 //ToDo: Have a command to check what the schedulor is doing, so we can be sure toggle_off actually worked.
-//ToDo: Another big BUG is when you set operations from the rotation itself for example Ballroom after amiens is what we usually get but if u put it manually it will cause issues.
-// ToDo: Adding a check to avoid skipping map till entire OPS is completed can be implemented but who cares
+
+
+
+
