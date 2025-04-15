@@ -159,6 +159,12 @@ public class CustomMapSetter extends ListenerAdapter {
 
         if (event.getGuild() == null) return;
 
+        String guildId = event.getGuild().getId();
+        if (!guildId.equals(Configuration.getDISCORD_SERVER_ID()) && !guildId.equals("1338475669000028182")) { // !(A OR B) = NOT A AND NOT B
+            event.reply("This command is not available in this server.").setEphemeral(true).queue();
+            return;
+        }
+
         if (event.getName().equals("custom_map")) {
             List<String> customMapsSetByUser = event.getOptions().stream()
                     .map(OptionMapping::getAsString)

@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter;
 public class MapManager {
 
     private final String FILE_PATH = Configuration.getFILE_PATH();
-    private static final String NEWA_URL = "https://api.gametools.network/bf1/servers/?name=%5Bnew%21%5DAllMap%20Operation%20%7C%20discord.gg%2Fnewa%20%7C%20NoHacker%20HappyGame&platform=pc&limit=10&region=all&lang=en-us";
+    private static final String NEWA_URL = Configuration.getSERVER_URL();
 
     public String getCurrentMap() throws IOException, URISyntaxException {
 
@@ -70,8 +70,8 @@ public class MapManager {
     public void bfMapChange(int mapNumber) {
         String urlString = "https://manager-api.gametools.network/api/changelevel";
         String token = Configuration.getGTToken();
-        String groupId = "0a3488e2-848c-11ee-9ff7-02420a000912";
-        String serverId = "d7073b2c-8490-11ee-9ec4-02420a00091d";
+        String groupId = Configuration.getGROUP_ID();
+        String serverId = Configuration.getSERVER_ID();
 
         try {
             URL url = new URL(urlString);
@@ -109,7 +109,6 @@ public class MapManager {
         } catch (IOException e) {
             System.out.println("The change map API isn't working, GT is possibly down");
         }
-
     }
 
     public boolean isCurrentMapPartOfOperation(String currentMap, String previousMap) {
