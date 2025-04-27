@@ -122,7 +122,7 @@ public class EaApi {
 
         if(response.statusCode()==200) System.out.println("null");
         else{
-            response.toString()
+            response.toString();
         }
 
 
