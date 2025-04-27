@@ -1,6 +1,7 @@
 package commands;
 
 import config.Configuration;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -19,6 +20,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
 
+import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -118,7 +120,7 @@ public class CustomMapSetter extends ListenerAdapter {
                     }
                     return;
                 } else if (a.equals(mapHolder.get(c))) {
-                    sendLog("Map to be set is " + mapHolder.get(c)+". and map from natural rotation is "+a+". Skip map change!");
+                    sendLog("Map to be set is " + mapHolder.get(c) + ". and map from natural rotation is " + a + ". Skip map change!");
                     b = mapHolder.get(c);
                     c++;
                     sentTheOperationLog = false;
@@ -127,10 +129,11 @@ public class CustomMapSetter extends ListenerAdapter {
                 } else {
                     sendLog("Current map: " + a + " | Previous map was: " + b + " | " + "c = " + c + " | " + "Switching maps to: " + mapHolder.get(c));
 
+                    Thread.sleep(12000); // 12-second delay
+
                     mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
                     b = mapHolder.get(c);
                     sentTheOperationLog = false;
-
                     lastMapChangeTime = Instant.now();
                     sendLog("Map changed from " + a + " to " + mapHolder.get(c));
                     c = (c + 1) % mapHolder.size();
@@ -237,12 +240,16 @@ public class CustomMapSetter extends ListenerAdapter {
         event.getGuild().upsertCommand(loopOffCommand).queue();
     }
 
-    private void sendLog(String message) {
+
+    public void sendLog(String message) {
         TextChannel logChannel = jda.getTextChannelById(LOG_CHANNEL_ID);
         if (logChannel != null) {
             String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+            EmbedBuilder embedBuilder = new EmbedBuilder()
+                    .setColor(new Color(8, 60, 219, 144)).setDescription(currentTime + "   " + message);
+            logChannel.sendMessageEmbeds(embedBuilder.build()).queue();
+
             System.out.println(currentTime + "   " + message);
-            logChannel.sendMessage(currentTime + "   " + message).queue();
         } else {
             System.out.println("log channel not found or inaccessible");
         }
@@ -256,7 +263,7 @@ public class CustomMapSetter extends ListenerAdapter {
         } catch (Exception e) {
             sendLog("Scheduler is null ");
         }
-        scheduler.scheduleAtFixedRate(this::changeMap, 1, 5, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::changeMap, 1, 4, TimeUnit.SECONDS);
         //This delay helps update the recentMaps which we get from MapHistory class
     }
 
