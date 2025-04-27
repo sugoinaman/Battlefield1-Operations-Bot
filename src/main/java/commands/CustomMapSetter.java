@@ -1,9 +1,8 @@
 package commands;
 
 import config.Configuration;
-import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -19,10 +18,9 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import tools.MapManager;
 
+import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,17 +30,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static tools.DiscordTools.sendLog;
+
 public class CustomMapSetter extends ListenerAdapter {
 
-    private JDA jda;
-
     private List<String> mapHolder = new ArrayList<>(); //Contains maps entered by the user from slash commands
-
     private static ScheduledExecutorService scheduler = null;
-
     MapManager mapManager = new MapManager();
-
-    private static final String LOG_CHANNEL_ID = Configuration.getLOG_CHANNEL_ID();
     private boolean waitingForCurrentMapToFinish = false;
     private Instant lastMapChangeTime = Instant.EPOCH;
     private boolean sentTheOperationLog = false;
@@ -51,7 +45,7 @@ public class CustomMapSetter extends ListenerAdapter {
     private String b = null;
     private int c = 0;
 
-    // availableMaps are starting maps of an OPS because that's what we are allowed to set.
+    // set of maps a user can set
     private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
     // all maps are mapped to an integer value which we get from GameTools, we do it because the map change API uses a map index rather than a name
     private static final HashMap<String, Integer> hashMap = new HashMap<>();
@@ -83,11 +77,6 @@ public class CustomMapSetter extends ListenerAdapter {
         hashMap.put("Fao Fortress", 23);
     }
 
-    public CustomMapSetter(JDA jda) {
-        this.jda = jda;
-    }
-
-
     public void changeMap() {
 
         try {
@@ -118,7 +107,7 @@ public class CustomMapSetter extends ListenerAdapter {
                     }
                     return;
                 } else if (a.equals(mapHolder.get(c))) {
-                    sendLog("Map to be set is " + mapHolder.get(c)+". and map from natural rotation is "+a+". Skip map change!");
+                    sendLog("Map to be set is " + mapHolder.get(c) + ". and map from natural rotation is " + a + ". Skip map change!");
                     b = mapHolder.get(c);
                     c++;
                     sentTheOperationLog = false;
@@ -142,7 +131,6 @@ public class CustomMapSetter extends ListenerAdapter {
         }
     }
 
-
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
         if (event.getName().equals("custom_map")) {
@@ -159,9 +147,12 @@ public class CustomMapSetter extends ListenerAdapter {
 
         if (event.getGuild() == null) return;
 
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.setColor(new Color(197, 62, 62));
+
         String guildId = event.getGuild().getId();
         if (!guildId.equals(Configuration.getDISCORD_SERVER_ID()) && !guildId.equals("1338475669000028182")) { // !(A OR B) = NOT A AND NOT B
-            event.reply("This command is not available in this server.").setEphemeral(true).queue();
+            event.getChannel().sendMessageEmbeds(embedBuilder.setDescription("This command is not available in this server.").build()).queue();
             return;
         }
 
@@ -169,7 +160,7 @@ public class CustomMapSetter extends ListenerAdapter {
             List<String> customMapsSetByUser = event.getOptions().stream()
                     .map(OptionMapping::getAsString)
                     .collect(Collectors.toList());
-            event.reply("Maps selected for rotation are: " + String.join(", ", customMapsSetByUser)).queue();
+            event.getChannel().sendMessageEmbeds(embedBuilder.setDescription("Maps selected for rotation are: " + String.join(", ", customMapsSetByUser)).build()).queue();
             sendLog("List of maps to be looped has been updated to: " + (String.join("-> ", customMapsSetByUser)) + ". Waiting for current map to be finished before turning on");
 
             mapHolder = new ArrayList<>(customMapsSetByUser);
@@ -189,17 +180,16 @@ public class CustomMapSetter extends ListenerAdapter {
         }
         if (event.getName().equals("toggle_off")) {
             if (isCustomMapLoopOn) {
-                event.reply("Turned off custom map rotation").queue();
                 try {
                     mapHolder.clear();
                     c = 0;
+                    stopScheduler();
+                    event.getChannel().sendMessageEmbeds(embedBuilder.setDescription("Turned off custom map rotation").build()).queue();
                 } catch (Exception e) {
-                    System.out.println("Error clearing mapHolder");
                     sendLog("Error clearing mapHolder");
                 }
-                stopScheduler();
             } else {
-                event.reply("Cannot switch custom map loop because it wasn't ON").queue();
+                event.getChannel().sendMessageEmbeds(embedBuilder.setDescription("Cannot switch custom map loop because it wasn't ON").build()).queue();
                 sendLog("Cannot switch custom map loop because it wasn't ON");
             }
         }
@@ -237,16 +227,6 @@ public class CustomMapSetter extends ListenerAdapter {
         event.getGuild().upsertCommand(loopOffCommand).queue();
     }
 
-    private void sendLog(String message) {
-        TextChannel logChannel = jda.getTextChannelById(LOG_CHANNEL_ID);
-        if (logChannel != null) {
-            String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            System.out.println(currentTime + "   " + message);
-            logChannel.sendMessage(currentTime + "   " + message).queue();
-        } else {
-            System.out.println("log channel not found or inaccessible");
-        }
-    }
 
     public void startScheduler() {
         try {
@@ -274,6 +254,8 @@ public class CustomMapSetter extends ListenerAdapter {
 
 
 //ToDo: Have a command to check what the schedulor is doing, so we can be sure toggle_off actually worked.
+//ToDo: Add a command to check if the loop is on, and if it is then print out the maps
+
 
 
 

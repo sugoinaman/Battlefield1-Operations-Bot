@@ -1,3 +1,4 @@
+
 import commands.CustomMapSetter;
 import commands.MapHistory;
 import config.Configuration;
@@ -11,7 +12,10 @@ public class Main {
         JDA jda = JDABuilder.createDefault(Configuration.getDiscordToken())
                 .addEventListeners(new MapHistory())
                 .build();
-        jda.addEventListener(new CustomMapSetter(jda));
+//        jda.addEventListener(new CustomMapSetter(jda));
+
+//        JDA jda = JDABuilder.createDefault(Configuration.getDiscordToken())
+//                .addEventListeners(new PingCommand()).build() ;
     }
 }
 
