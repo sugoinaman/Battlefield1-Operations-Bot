@@ -1,5 +1,8 @@
 package tools;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -12,6 +15,8 @@ import java.util.concurrent.ExecutionException;
 public class EaApi {
 
     HttpClient client = HttpClient.newHttpClient();
+
+    ObjectMapper objectMapper = new ObjectMapper();
 
 
     String[] headers = {"User-Agent", "ProtoHttp 1.3/DS 15.1.2.1.0 (Windows)",
@@ -101,8 +106,9 @@ public class EaApi {
 
     /**
      * @param player_name name of the player
+     * @return personaId of player
      */
-    public void getPersonaByName(String player_name) throws IOException, InterruptedException {
+    public String getPersonaByName(String player_name) throws IOException, InterruptedException {
 
         String uri = "https://gateway.ea.com/proxy/identity/personas?namespaceName=cem_ea_id&displayName=" + player_name;
 
@@ -120,13 +126,14 @@ public class EaApi {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if(response.statusCode()==200) System.out.println("null");
-        else{
-            response.toString();
+        if(response.statusCode()==200) {
+
+            JsonNode jsonNode = objectMapper.readTree(response.body());
         }
-
-
-
+        else{
+            System.out.println(response);
+        }
+        return null;
     }
 
 }
