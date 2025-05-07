@@ -1,1 +1,3 @@
 1.) /current = tags all admins on ops
+2.) The kick command -> gameId, personaId
+3.) The change Map command -> persistedGameId, level index
