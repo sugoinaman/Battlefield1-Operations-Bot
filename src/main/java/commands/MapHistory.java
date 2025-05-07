@@ -77,4 +77,3 @@ public class MapHistory extends ListenerAdapter {
         event.getGuild().upsertCommand(Commands.slash("map_history", "Shows maps history on OPS, history resets every 6:30AM")).queue();
     }
 }
-

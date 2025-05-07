@@ -1,3 +1,18 @@
+1.) Running /toggle_off doesn't return "already off" when bot runs for the first time and the succession(?)
+
+
+FIXED!
+
+
+2.) A custom auto command which changes maps from a list of maps minus 6 maps that were played recently
+and puts random map from a pool of available_maps.
+3.) Sub ideas for the above command:
+    1.) Command is only going to be active during 1pm to 1am since only then the QQ is off.
+    2.) Check the number of players in EU, if they are higher than 6000 I can increase set of available_maps to include DLC.
+
+4.) have an /info command to tell the user what is happening, what will be the next map/if custom map is on.
+
+
 1.) /current = tags all admins on ops
 2.) The kick command -> gameId, personaId
 3.) The change Map command -> persistedGameId, level index
