@@ -85,7 +85,6 @@ public class CustomMapSetter extends ListenerAdapter {
         this.jda = jda;
     }
 
-
     public void changeMap() { // the main function which will run every 5 seconds.
 
         try {
@@ -144,7 +143,6 @@ public class CustomMapSetter extends ListenerAdapter {
         }
     }
 
-
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
         if (event.getName().equals("custom_map")) {
@@ -198,11 +196,13 @@ public class CustomMapSetter extends ListenerAdapter {
             isCustomMapLoopOn = true;
 
         }
+
         if (event.getName().equals("toggle_off")) {
             if (isCustomMapLoopOn) {
                 event.reply("Turned off custom map rotation").queue();
                 try {
                     mapHolder.clear();
+                    isCustomMapLoopOn = false;
                     c = 0;
                 } catch (Exception e) {
                     System.out.println("Error clearing mapHolder");
@@ -213,6 +213,24 @@ public class CustomMapSetter extends ListenerAdapter {
                 event.reply("Cannot switch custom map loop because it wasn't ON").queue();
                 sendLog("Cannot switch custom map loop because it wasn't ON");
             }
+        }
+
+        if (event.getName().equals("custom_map_info")) {
+
+            event.deferReply().queue();
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.setColor(new Color(76, 3, 154));
+            embed.setTitle("Info about `custom_map` command"); // Optional URL
+
+
+            if (scheduler == null || scheduler.isShutdown())
+                embed.addField("custom_map is", "OFF",false);
+            else {
+                embed.addField("custom_map is", "ON", false);
+                embed.addField("List of set maps:", mapHolder.toString(), false);
+                embed.addField("Next map:",mapHolder.get(c),false);
+            }
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
     }
 
@@ -235,8 +253,6 @@ public class CustomMapSetter extends ListenerAdapter {
                 .addOptions(new OptionData(OptionType.STRING, "map13", "Optional Map to be set", false, true))
                 .addOptions(new OptionData(OptionType.STRING, "map14", "Optional Map to be set", false, true))
                 .addOptions(new OptionData(OptionType.STRING, "map15", "Optional Map to be set", false, true))
-
-
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
 
@@ -244,8 +260,13 @@ public class CustomMapSetter extends ListenerAdapter {
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
 
+        CommandData infoCommand = Commands.slash("custom_map_info", "shows info about custom map command")
+                .setContexts(InteractionContextType.GUILD)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS));
+
         event.getGuild().upsertCommand(commandData).queue();
         event.getGuild().upsertCommand(loopOffCommand).queue();
+        event.getGuild().upsertCommand(infoCommand).queue();
     }
 
 
