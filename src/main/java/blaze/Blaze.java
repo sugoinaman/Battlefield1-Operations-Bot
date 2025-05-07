@@ -79,7 +79,7 @@ public class Blaze {
     }
 
     private Map<String, Object> parseStruct(byte[] data, int offset, boolean readable) {
-        return new HashMap<>(); /
+        return new HashMap<>();
     }
 }
 

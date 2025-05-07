@@ -27,7 +27,7 @@ public class EaAuth {
         return access_token;
     }
 
-    public String getAuthCode() {
+    public String getAuthCode() throws IOException, InterruptedException {
         if(authCode == null) getEaAuthId();
         return authCode;
     }
@@ -59,7 +59,7 @@ public class EaAuth {
 
     }
 
-    public void getEaAuthId() {
+    public void getEaAuthId() throws IOException, InterruptedException {
         String uri = "https://accounts.ea.com/connect/auth?access_token=" +
                 access_token + "&client_id=sparta-backend-as-user-pc&response_type=code&release_type=prod";
         HttpRequest request = HttpRequest.newBuilder()
