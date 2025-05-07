@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -37,13 +38,9 @@ import java.util.stream.Stream;
 public class CustomMapSetter extends ListenerAdapter {
 
     private JDA jda;
-
     private List<String> mapHolder = new ArrayList<>(); //Contains maps entered by the user from slash commands
-
     private static ScheduledExecutorService scheduler = null;
-
     MapManager mapManager = new MapManager();
-
     private static final String LOG_CHANNEL_ID = Configuration.getLOG_CHANNEL_ID();
     private boolean waitingForCurrentMapToFinish = false;
     private Instant lastMapChangeTime = Instant.EPOCH;
@@ -52,7 +49,6 @@ public class CustomMapSetter extends ListenerAdapter {
     private String currentMapWhenCustomCommand = null;
     private String b = null;
     private int c = 0;
-
     // availableMaps are starting maps of an OPS because that's what we are allowed to set.
     private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
     // all maps are mapped to an integer value which we get from GameTools, we do it because the map change API uses a map index rather than a name
@@ -90,7 +86,7 @@ public class CustomMapSetter extends ListenerAdapter {
     }
 
 
-    public void changeMap() {
+    public void changeMap() { // the main function which will run every 5 seconds.
 
         try {
             if (mapManager.getPlayerCount() < 10) { // stop the custom map when server is dead!
@@ -108,28 +104,31 @@ public class CustomMapSetter extends ListenerAdapter {
                     return;
                 } else {
                     waitingForCurrentMapToFinish = false;
-                    sendLog("The current map is: " + a + " and the previous map was: " + b + ". " + "Starting custom rotation....");
+                    System.out.println("The current map is: " + a + " and the previous map was: " + b + ". " + "Starting custom rotation");
+                    sendLog("Current map is finished, starting custom rotation now...");
                 }
             }
 
             if (!b.equals(a)) {
                 if (mapManager.isCurrentMapPartOfOperation(a, b)) {
                     if (!sentTheOperationLog) {
-                        sendLog("The current map is: " + a + " and the previous map was: " + b + ". " + "Skipping map change....");
+                        // map is part of an operation
+                        sendLog("Current map is: " + a + " which is part of  " + b + "'s operation " + " Skipping map change....");
                         sentTheOperationLog = true;
                     }
                     return;
                 } else if (a.equals(mapHolder.get(c))) {
-                    sendLog("Map to be set is " + mapHolder.get(c) + ". and map from natural rotation is " + a + ". Skip map change!");
+                    // map was auto changed to a map which is what we wanted, so we skip the map change here.
+                    sendLog("Map is now " + a);
                     b = mapHolder.get(c);
                     c++;
                     sentTheOperationLog = false;
-                    lastMapChangeTime = Instant.now(); // Wait 60 more seconds here
+                    lastMapChangeTime = Instant.now(); // Wait 60 more seconds here in case game tools API doesn't update quickly
                     return;
                 } else {
-                    sendLog("Current map: " + a + " | Previous map was: " + b + " | " + "c = " + c + " | " + "Switching maps to: " + mapHolder.get(c));
+                    sendLog("Current map: " + a + " | Previous map was: " + b + " | Switching maps to: " + mapHolder.get(c));
 
-                    Thread.sleep(12000); // 12-second delay
+                    Thread.sleep(12000); // 12-second delay so the unwanted map loads and players don't get bugged
 
                     mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
                     b = mapHolder.get(c);
@@ -176,7 +175,16 @@ public class CustomMapSetter extends ListenerAdapter {
             sendLog("List of maps to be looped has been updated to: " + (String.join("-> ", customMapsSetByUser)) + ". Waiting for current map to be finished before turning on");
 
             mapHolder = new ArrayList<>(customMapsSetByUser);
-            c = 0; //reset the counter
+            c = 0; // reset the counter
+            // if the command runs again without turning off scheduler first it will queue up another scheduler and pool up unnecessary resources
+            try {
+                if (scheduler != null && !scheduler.isShutdown()) {
+                    scheduler.shutdown();
+                    System.out.println("Scheduler was already running");
+                }
+            } catch (Exception e) {
+                System.out.println("Scheduler was stopped");
+            }
             startScheduler();
             try {
                 currentMapWhenCustomCommand = mapManager.getCurrentMap();
@@ -257,11 +265,11 @@ public class CustomMapSetter extends ListenerAdapter {
 
     public void startScheduler() {
         try {
-            if (scheduler == null || scheduler.isShutdown() || scheduler.isTerminated()) {
+            if (scheduler == null || scheduler.isShutdown()) {
                 scheduler = Executors.newScheduledThreadPool(1);
             }
         } catch (Exception e) {
-            sendLog("Scheduler is null ");
+            sendLog("Trouble starting scheduler ");
         }
         scheduler.scheduleAtFixedRate(this::changeMap, 1, 4, TimeUnit.SECONDS);
         //This delay helps update the recentMaps which we get from MapHistory class
@@ -271,6 +279,8 @@ public class CustomMapSetter extends ListenerAdapter {
         try {
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown();
+                scheduler = null;
+                mapHolder.clear(); // clear the map list
                 sendLog("Custom map loop turned off.");
             }
         } catch (Exception e) {
@@ -279,8 +289,6 @@ public class CustomMapSetter extends ListenerAdapter {
     }
 }
 
-
-//ToDo: Have a command to check what the schedulor is doing, so we can be sure toggle_off actually worked.
 
 
 
