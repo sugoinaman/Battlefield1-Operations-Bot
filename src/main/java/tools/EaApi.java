@@ -45,8 +45,6 @@ public class EaApi {
 
 
     /**
-     * Selects a specific level for a persisted game.
-     *
      * @param persistedGameId server guid
      * @param levelIndex      index of the map
      */
@@ -61,7 +59,7 @@ public class EaApi {
                     "params": {
                         "game": "tunguska",
                         "persistedGameId": %s,
-                        "levelIndex": %d,
+                        "levelIndex": %d
                     },
                      "id": "%s"
                 }
@@ -74,11 +72,11 @@ public class EaApi {
     }
 
     /**
-     * Removes a player from the game specified by the given game ID.
+     * kick a player
      *
-     * @param gameId    the unique identifier of the game from which the player will be removed
-     * @param personaId the unique identifier of the player to be removed from the game
-     * @param reason    the reason for kick
+     * @param gameId
+     * @param personaId
+     * @param reason
      */
     public void kickPlayer(int gameId, String personaId, String reason) throws ExecutionException, InterruptedException {
 
