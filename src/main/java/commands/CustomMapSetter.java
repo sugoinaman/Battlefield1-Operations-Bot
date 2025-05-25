@@ -122,21 +122,24 @@ public class CustomMapSetter extends ListenerAdapter {
                     b = mapHolder.get(c);
                     c++;
                     sentTheOperationLog = false;
+                    System.out.println("Map is now " + a + "updated C: " + c);
+
                     lastMapChangeTime = Instant.now(); // Wait 60 more seconds here in case game tools API doesn't update quickly
                     return;
+
                 } else {
 
-                    c = (c + 1) % mapHolder.size();
+                    c = c % mapHolder.size();
 
                     sendLog("Current map: " + a + " | Previous map was: " + b + " | Switching maps to: " + mapHolder.get(c));
 
                     Thread.sleep(12000); // 12-second delay so the unwanted map loads and players don't get bugged
-
                     mapManager.bfMapChange(hashMap.get(mapHolder.get(c)));
                     b = mapHolder.get(c);
                     sentTheOperationLog = false;
                     lastMapChangeTime = Instant.now();
                     sendLog("Map changed from " + a + " to " + mapHolder.get(c));
+                    c++;
                 }
             }
         } catch (Exception e) {
@@ -225,11 +228,11 @@ public class CustomMapSetter extends ListenerAdapter {
 
 
             if (scheduler == null || scheduler.isShutdown())
-                embed.addField("custom_map is", "OFF",false);
+                embed.addField("custom_map is", "OFF", false);
             else {
                 embed.addField("custom_map is", "ON", false);
                 embed.addField("List of set maps:", mapHolder.toString(), false);
-                embed.addField("Next map:",mapHolder.get(c),false);
+                embed.addField("Next map:", mapHolder.get(c), false);
             }
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
