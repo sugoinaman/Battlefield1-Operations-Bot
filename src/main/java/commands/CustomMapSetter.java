@@ -87,6 +87,8 @@ public class CustomMapSetter extends ListenerAdapter {
 
     public void changeMap() { // the main function which will run every 5 seconds.
 
+        c = c % mapHolder.size();
+
         try {
             if (mapManager.getPlayerCount() < 10) { // stop the custom map when server is dead!
                 stopScheduler();
@@ -109,6 +111,7 @@ public class CustomMapSetter extends ListenerAdapter {
             }
 
             if (!b.equals(a)) {
+
                 if (mapManager.isCurrentMapPartOfOperation(a, b)) {
                     if (!sentTheOperationLog) {
                         // map is part of an operation
@@ -128,9 +131,6 @@ public class CustomMapSetter extends ListenerAdapter {
                     return;
 
                 } else {
-
-                    c = c % mapHolder.size();
-
                     sendLog("Current map: " + a + " | Previous map was: " + b + " | Switching maps to: " + mapHolder.get(c));
 
                     Thread.sleep(12000); // 12-second delay so the unwanted map loads and players don't get bugged
