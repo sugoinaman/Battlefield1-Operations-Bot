@@ -125,6 +125,9 @@ public class CustomMapSetter extends ListenerAdapter {
                     lastMapChangeTime = Instant.now(); // Wait 60 more seconds here in case game tools API doesn't update quickly
                     return;
                 } else {
+
+                    c = (c + 1) % mapHolder.size();
+
                     sendLog("Current map: " + a + " | Previous map was: " + b + " | Switching maps to: " + mapHolder.get(c));
 
                     Thread.sleep(12000); // 12-second delay so the unwanted map loads and players don't get bugged
@@ -134,9 +137,7 @@ public class CustomMapSetter extends ListenerAdapter {
                     sentTheOperationLog = false;
                     lastMapChangeTime = Instant.now();
                     sendLog("Map changed from " + a + " to " + mapHolder.get(c));
-                    c = (c + 1) % mapHolder.size();
                 }
-
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
