@@ -92,6 +92,7 @@ public class CustomMapSetter extends ListenerAdapter {
         try {
             if (mapManager.getPlayerCount() < 10) { // stop the custom map when server is dead!
                 stopScheduler();
+                sendLog("Player count less than 10, stopping auto rotation");
             }
             String currentMapAfterCustomCommand = mapManager.getCurrentMap();
             String a = mapManager.getCurrentMap(); // Updated 5 seconds.
