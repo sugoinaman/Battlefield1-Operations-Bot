@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -50,35 +49,36 @@ public class CustomMapSetter extends ListenerAdapter {
     private String b = null;
     private int c = 0;
     // availableMaps are starting maps of an OPS because that's what we are allowed to set.
-    private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge", "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
+    private final String[] availableMaps = {"Giant's Shadow", "Monte Grappa", "River Somme", "Cape Helles", "Zeebrugge",
+            "Fao Fortress", "Soissons", "Volga River", "St Quentin Scar", "Ballroom Blitz", "Łupków Pass", "Prise de Tahure", "Verdun Heights"};
     // all maps are mapped to an integer value which we get from GameTools, we do it because the map change API uses a map index rather than a name
     private static final HashMap<String, Integer> hashMap = new HashMap<>();
 
     static {
-        hashMap.put("Soissons", 0);
-        hashMap.put("Achi Baba", 1);
-        hashMap.put("Suez", 2);
-        hashMap.put("Fort De Vaux", 3);
+        hashMap.put("Soissons", 18);
+        hashMap.put("Achi Baba", 16);
+        hashMap.put("Suez", 20);
+        hashMap.put("Fort De Vaux", 1);
         hashMap.put("Giant's Shadow", 4);
-        hashMap.put("Monte Grappa", 5);
-        hashMap.put("Verdun Heights", 6);
-        hashMap.put("River Somme", 7);
-        hashMap.put("Cape Helles", 8);
-        hashMap.put("Prise de Tahure", 9);
-        hashMap.put("Zeebrugge", 10);
-        hashMap.put("Empire's Edge", 11);
-        hashMap.put("Volga River", 12);
-        hashMap.put("Rupture", 13);
-        hashMap.put("St Quentin Scar", 14);
-        hashMap.put("Amiens", 15);
-        hashMap.put("Ballroom Blitz", 16);
-        hashMap.put("Galicia", 17);
-        hashMap.put("Tsaritsyn", 18);
-        hashMap.put("Brusilov Keep", 19);
-        hashMap.put("Łupków Pass", 20);
-        hashMap.put("Argonne Forest", 21);
-        hashMap.put("Sinai Desert", 22);
-        hashMap.put("Fao Fortress", 23);
+        hashMap.put("Monte Grappa", 13);
+        hashMap.put("Verdun Heights", 9);
+        hashMap.put("River Somme", 3);
+        hashMap.put("Cape Helles", 0);
+        hashMap.put("Prise de Tahure", 17);
+        hashMap.put("Zeebrugge", 6);
+        hashMap.put("Empire's Edge", 22);
+        hashMap.put("Volga River", 21);
+        hashMap.put("Rupture", 14);
+        hashMap.put("St Quentin Scar", 8);
+        hashMap.put("Amiens", 5);
+        hashMap.put("Ballroom Blitz", 23);
+        hashMap.put("Galicia", 12);
+        hashMap.put("Tsaritsyn", 11);
+        hashMap.put("Brusilov Keep", 7);
+        hashMap.put("Łupków Pass", 19);
+        hashMap.put("Argonne Forest", 2);
+        hashMap.put("Sinai Desert", 15);
+        hashMap.put("Fao Fortress", 10);
     }
 
     public CustomMapSetter(JDA jda) {
@@ -116,7 +116,7 @@ public class CustomMapSetter extends ListenerAdapter {
                 if (mapManager.isCurrentMapPartOfOperation(a, b)) {
                     if (!sentTheOperationLog) {
                         // map is part of an operation
-                        sendLog("Current map is: " + a + " which is part of  " + b + "'s operation " + " Skipping map change....");
+                        sendLog("Current map is: " + a + " which is part of  " + b + "'s operation.");
                         sentTheOperationLog = true;
                     }
                     return;

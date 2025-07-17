@@ -7,6 +7,7 @@ It polls the api every 5 seconds, when a map changes and if the map now is somet
 
 Disclaimer: All the above code is made through the use of GameTools Network API which is available for everyone. Simulating blaze would be a much easier way compared to this but it requires extensive reverse engineering which is very difficult with ea anti cheat. (although a few people did it before bcz no eac)
 
+Map index in CustomMapSetter is different for every server, please find yours from gametools.
 To create a .jar file run:
 mvn package clean
 
