@@ -9,5 +9,5 @@ Disclaimer: All the above code is made through the use of GameTools Network API 
 
 Map index in CustomMapSetter is different for every server, please find yours from gametools.
 To create a .jar file run:
-mvn package clean
+mvn clean package
 
