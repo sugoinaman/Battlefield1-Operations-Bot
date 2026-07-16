@@ -1,0 +1,14 @@
+{
+  "provider": "GAME_TOOLS",
+  "discord": {
+    "token": "your-discord-bot-token",
+    "serverId": "your-discord-server-id",
+    "logChannelId": "your-log-channel-id"
+  },
+  "gameTools": {
+    "token": "your-gametools-token",
+    "serverUrl": "https://example.invalid/servers",
+    "groupId": "your-gametools-group-id",
+    "serverId": "your-gametools-server-id"
+  }
+}

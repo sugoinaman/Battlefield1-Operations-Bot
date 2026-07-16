@@ -1,0 +1,12 @@
+{
+  "provider": "EA",
+  "discord": {
+    "token": "your-discord-bot-token",
+    "serverId": "your-discord-server-id",
+    "logChannelId": "your-log-channel-id"
+  },
+  "ea": {
+    "remid": "your-ea-remid",
+    "sid": null
+  }
+}

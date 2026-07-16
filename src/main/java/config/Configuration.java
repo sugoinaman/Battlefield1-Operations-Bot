@@ -1,43 +1,105 @@
 package config;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Objects;
 
-public class Configuration {
-    private final static Dotenv dotenv = Dotenv.configure()
-            .directory("./")
-            .load();
+/**
+ * Application configuration loaded from a JSON file at startup.
+ */
+public record Configuration(
+        MapProvider provider,
+        Discord discord,
+        GameTools gameTools,
+        Ea ea
+) {
 
+    public Configuration {
+        provider = Objects.requireNonNull(provider, "provider is required");
+        discord = Objects.requireNonNull(discord, "discord configuration is required");
 
-    public static String getDiscordToken() {
-        return dotenv.get("DISCORD_TOKEN");
+        switch (provider) {
+            case GAME_TOOLS -> {
+                Objects.requireNonNull(
+                        gameTools,
+                        "gameTools configuration is required when provider is GAME_TOOLS"
+                );
+                if (ea != null) {
+                    throw new IllegalArgumentException(
+                            "ea configuration must be omitted when provider is GAME_TOOLS"
+                    );
+                }
+            }
+            case EA -> {
+                Objects.requireNonNull(ea, "ea configuration is required when provider is EA");
+                if (gameTools != null) {
+                    throw new IllegalArgumentException(
+                            "gameTools configuration must be omitted when provider is EA"
+                    );
+                }
+            }
+        }
     }
 
-    public static String getFILE_PATH() {
-        return dotenv.get("FILE_PATH");
+    public static Configuration load(Path path) throws IOException {
+        return new ConfigurationStore(path).load();
     }
 
-    public static String getGTToken() {
-        return dotenv.get("GT_TOKEN");
+    public Configuration withEaCredentials(Ea updatedEa) {
+        if (provider != MapProvider.EA) {
+            throw new IllegalStateException("EA credentials cannot be stored for a GameTools configuration");
+        }
+        return new Configuration(provider, discord, null, updatedEa);
     }
 
-    public static String getLOG_CHANNEL_ID() {
-        return dotenv.get("LOG_CHANNEL_ID");
+    public enum MapProvider {
+        GAME_TOOLS,
+        EA
     }
 
-    public static String getGROUP_ID(){
-        return dotenv.get("GROUP_ID");
+    public record Discord(String token, String serverId, String logChannelId) {
+
+        public Discord {
+            token = requireNonBlank(token, "discord.token");
+            serverId = requireNonBlank(serverId, "discord.serverId");
+            logChannelId = requireNonBlank(logChannelId, "discord.logChannelId");
+        }
     }
 
-    public static String getSERVER_ID(){
-        return dotenv.get("SERVER_ID");
+    public record GameTools(String token, String serverUrl, String groupId, String serverId) {
+
+        public GameTools {
+            token = requireNonBlank(token, "gameTools.token");
+            serverUrl = requireNonBlank(serverUrl, "gameTools.serverUrl");
+            groupId = requireNonBlank(groupId, "gameTools.groupId");
+            serverId = requireNonBlank(serverId, "gameTools.serverId");
+        }
     }
 
-    public static String getSERVER_URL(){
-        return dotenv.get("SERVER_URL");
+    /**
+     * Persistent EA cookies. SID may be absent on first startup and generated from REMID.
+     */
+    public record Ea(String remid, String sid) {
+
+        public Ea {
+            remid = requireNonBlank(remid, "ea.remid");
+            sid = normalizeOptional(sid);
+        }
+
+        public boolean hasSid() {
+            return sid != null;
+        }
     }
 
-    public static String getDISCORD_SERVER_ID(){
-        return dotenv.get("DISCORD_SERVER_ID");
+    private static String requireNonBlank(String value, String propertyName) {
+        Objects.requireNonNull(value, propertyName + " is required");
+        if (value.isBlank()) {
+            throw new IllegalArgumentException(propertyName + " must not be blank");
+        }
+        return value;
     }
 
+    private static String normalizeOptional(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
 }
